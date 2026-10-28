@@ -47,6 +47,8 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **
 | Blood Magic Additions（血魔法附加） | `bmaddon` | 未限定最低版本 | 客户端、服务端 |
 | NeoECOAEExtension | `neoecoae` | 20.5.1 或更高| 客户端、服务端 |
 
+**说明：以上仅列出部分联动模组，并非完整列表；本模组还支持其他未在此处逐项列出的联动。所有联动均按实际安装情况启用，不要求全部安装。**
+
 可选联动不要求安装；安装时须符合上表版本范围，并安装该联动模组自身要求的前置。未声明最低版本的其他动态联动不在此处编造版本下限。
 
 MixinExtras 由 Useless Core 内置提供，通常无需单独安装。
