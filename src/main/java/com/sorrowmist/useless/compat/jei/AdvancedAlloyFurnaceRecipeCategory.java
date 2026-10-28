@@ -1,0 +1,626 @@
+package com.sorrowmist.useless.compat.jei;
+
+import appeng.api.stacks.GenericStack;
+import com.sorrowmist.useless.UselessMod;
+import com.sorrowmist.useless.content.machines.advanced_alloy_furnace.catalyst.CatalystParallelManager;
+import com.sorrowmist.useless.content.recipe.AdvancedAlloyFurnaceRecipe;
+import com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeCatalog;
+import com.sorrowmist.useless.content.recipe.AdapterUtils;
+import com.sorrowmist.useless.content.recipe.CountedIngredient;
+import com.sorrowmist.useless.content.recipe.LongSizedFluidIngredient;
+import com.sorrowmist.useless.init.ModBlocks;
+import com.sorrowmist.useless.init.ModTags;
+import com.sorrowmist.useless.core.config.AlloyFurnaceTierRules;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
+import mezz.jei.api.gui.drawable.IDrawable;
+import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
+import mezz.jei.api.helpers.IGuiHelper;
+import mezz.jei.api.recipe.IFocusGroup;
+import mezz.jei.api.recipe.RecipeIngredientRole;
+import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.recipe.category.IRecipeCategory;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraftforge.fluids.FluidStack;
+import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public class AdvancedAlloyFurnaceRecipeCategory implements IRecipeCategory<AlloyFurnaceRecipeCatalog.Entry> {
+    @Override
+    public @NotNull ResourceLocation getRegistryName(AlloyFurnaceRecipeCatalog.Entry entry) {
+        // Converted recipes may share a source ID. Include their stable fingerprint so
+        // JEI can save and restore each recipe bookmark without selecting another variant.
+        return AlloyFurnaceRecipeCatalog.jeiDisplayId(entry);
+    }
+
+    public static final RecipeType<AlloyFurnaceRecipeCatalog.Entry> TYPE =
+            RecipeType.create(UselessMod.MODID, "advanced_alloy_furnace", AlloyFurnaceRecipeCatalog.Entry.class);
+
+    // 使用JEI渲染贴图
+    private static final ResourceLocation GUI_TEXTURE =
+            new ResourceLocation(UselessMod.MODID, "textures/gui/jei_advanced_alloy_furnace_gui.png");
+
+    // JEI中显示的背景区域 (212x72)
+    private static final int DISPLAY_WIDTH = 212;
+    private static final int DISPLAY_HEIGHT = 72;
+
+    // 槽位位置 - 根据贴图调整
+    // 输入物品槽位 (最多12个) - 3行4列排列
+    private static final int INPUT_SLOTS_START_X = 1;
+    private static final int INPUT_SLOTS_START_Y = 1;
+    private static final int INPUT_SLOT_SPACING_X = 18;
+    private static final int INPUT_SLOT_SPACING_Y = 18;
+    private static final int ITEM_GRID_COLUMNS = 4;
+    private static final int ITEM_GRID_ROWS = 3;
+    private static final int ITEM_GRID_MAX_SLOTS = ITEM_GRID_COLUMNS * ITEM_GRID_ROWS;
+
+    // 输出物品槽位 (最多12个) - 3行4列排列
+    private static final int OUTPUT_SLOTS_START_X = 141;
+    private static final int OUTPUT_SLOTS_START_Y = 1;
+
+    // 流体槽位
+    private static final int FLUID_INPUT_X = 1;
+    private static final int FLUID_INPUT_Y = 55;
+    private static final int FLUID_INPUT_WIDTH = 69;
+    private static final int FLUID_INPUT_HEIGHT = 16;
+    private static final int FLUID_OUTPUT_X = 142;
+    private static final int FLUID_OUTPUT_Y = 55;
+    private static final int FLUID_OUTPUT_WIDTH = 69;
+    private static final int FLUID_OUTPUT_HEIGHT = 16;
+
+    // 催化剂和模具槽位
+    private static final int CATALYST_SLOT_X = 72;
+    private static final int CATALYST_SLOT_Y = 55;
+    private static final int MOLD_SLOT_START_X = 89;
+    private static final int MOLD_SLOT_END_X = 125;
+    private static final int MOLD_SLOT_Y = 55;
+    private static final int MOLD_SLOT_SPACING = 18;
+
+    // 进度条位置和尺寸
+    private static final int PROGRESS_BAR_X = 90;
+    private static final int PROGRESS_BAR_Y = 23;
+    private static final int PROGRESS_BAR_WIDTH = 32;
+    private static final int PROGRESS_BAR_HEIGHT = 8;
+    private static final int PROGRESS_BAR_SOURCE_X = 90;
+    private static final int PROGRESS_BAR_SOURCE_Y = 73;
+
+    // 能量显示区域
+    private static final int ENERGY_DISPLAY_X = 75;
+    private static final int ENERGY_DISPLAY_Y = 2;
+    private static final int ENERGY_DISPLAY_WIDTH = 62;
+    private static final int ENERGY_DISPLAY_HEIGHT = 7;
+
+    // 时间显示区域
+    private static final int TIME_DISPLAY_X = 78;
+    private static final int TIME_DISPLAY_Y = 41;
+    private static final int TIME_DISPLAY_WIDTH = 56;
+    private static final int TIME_DISPLAY_HEIGHT = 10;
+
+    // 文字提示位置
+    private static final int CATALYST_TEXT_Y = 13;
+    private static final int REQUIREMENT_TEXT_Y = 32;
+
+    // 并行数显示位置
+    private static final int PARALLEL_TEXT_X = 57;
+    private static final int PARALLEL_TEXT_Y = 5;
+
+    // 槽位实际渲染尺寸（MC默认）
+    private static final int SLOT_SIZE = 16;
+
+    private final IDrawable background;
+    private final IDrawable icon;
+    private final Component title;
+    private final int width;
+    private final int height;
+
+    AdvancedAlloyFurnaceRecipeCategory(IGuiHelper guiHelper) {
+        this.width = DISPLAY_WIDTH;
+        this.height = DISPLAY_HEIGHT;
+
+        // 创建背景，使用JEI贴图
+        this.background = guiHelper.createDrawable(
+                GUI_TEXTURE,
+                0, 0, // 纹理起始位置
+                DISPLAY_WIDTH, DISPLAY_HEIGHT // 显示尺寸
+        );
+
+        this.icon = guiHelper.createDrawableItemStack(new ItemStack(ModBlocks.ADVANCED_ALLOY_FURNACE_BLOCK.get()));
+        this.title = Component.translatable("block.useless_mod.advanced_alloy_furnace_block");
+    }
+
+    @Override
+    public @NotNull RecipeType<AlloyFurnaceRecipeCatalog.Entry> getRecipeType() {
+        return TYPE;
+    }
+
+    @Override
+    public @NotNull Component getTitle() {
+        return this.title;
+    }
+
+    @Override
+    public int getWidth() {
+        return this.width;
+    }
+
+    @Override
+    public int getHeight() {
+        return this.height;
+    }
+
+    @Override
+    public IDrawable getIcon() {
+        return this.icon;
+    }
+
+    @Override
+    public void setRecipe(@NotNull IRecipeLayoutBuilder builder,
+                          @NotNull AlloyFurnaceRecipeCatalog.Entry entry,
+                          @NotNull IFocusGroup focuses) {
+        AdvancedAlloyFurnaceRecipe recipe = entry.recipe();
+        // 计算配方相关的并行数信息
+        int targetTier = getTargetUselessIngotTier(recipe);
+        boolean isUselessRecipe = targetTier > 0;
+
+        // 输入物品槽位
+        List<CountedIngredient> inputs = recipe.inputs();
+        List<GenericStack> keyInputs = recipe.keyInputs();
+        int inputCount = inputs.size();
+        int totalInputCount = inputCount + keyInputs.size();
+
+        // 计算输入槽位的布局参数（支持超过12个时缩短间距）
+        int inputCols, inputRows;
+        float inputSpacingX, inputSpacingY;
+
+        if (totalInputCount <= ITEM_GRID_MAX_SLOTS) {
+            // 正常布局：4x3 网格
+            inputCols = ITEM_GRID_COLUMNS;
+            inputRows = ITEM_GRID_ROWS;
+            inputSpacingX = INPUT_SLOT_SPACING_X;
+            inputSpacingY = INPUT_SLOT_SPACING_Y;
+        } else {
+            // 缩放布局：根据数量动态调整
+            inputCols = (int) Math.ceil(Math.sqrt(totalInputCount));
+            if (inputCols > 6) inputCols = 6; // 最多6列
+
+            inputRows = (int) Math.ceil((float) totalInputCount / inputCols);
+
+            float horizontalScale = Math.min(1.0f,
+                    (float) (ITEM_GRID_COLUMNS - 1) / Math.max(1, inputCols - 1));
+            float verticalScale = Math.min(1.0f,
+                    (float) (ITEM_GRID_ROWS - 1) / Math.max(1, inputRows - 1));
+            inputSpacingX = INPUT_SLOT_SPACING_X * horizontalScale;
+            inputSpacingY = INPUT_SLOT_SPACING_Y * verticalScale;
+        }
+
+        // 设置输入物品槽位
+        for (int i = 0; i < inputCount; i++) {
+            int row = i / inputCols;
+            int col = i % inputCols;
+            int x = INPUT_SLOTS_START_X + (int) (col * inputSpacingX);
+            int y = INPUT_SLOTS_START_Y + (int) (row * inputSpacingY);
+
+            CountedIngredient countedIngredient = inputs.get(i);
+            Ingredient ingredient = countedIngredient.ingredient();
+            long count = countedIngredient.count();
+            int displayCount = (int) Math.min(count, Integer.MAX_VALUE);
+
+            ItemStack[] matchingStacks = ingredient.getItems();
+            if (matchingStacks.length == 0) {
+                ItemStack representative = AdapterUtils.itemRepresentative(ingredient);
+                matchingStacks = representative == null ? new ItemStack[0]
+                        : new ItemStack[] {representative};
+            }
+            if (matchingStacks.length > 0) {
+                ItemStack[] displayStacks = new ItemStack[matchingStacks.length];
+                for (int j = 0; j < matchingStacks.length; j++) {
+                    ItemStack displayStack = matchingStacks[j].copy();
+                    displayStack.setCount(displayCount);
+                    displayStacks[j] = displayStack;
+                }
+
+                Ingredient displayIngredient = Ingredient.of(displayStacks);
+
+                builder.addSlot(RecipeIngredientRole.INPUT, x, y)
+                       .addIngredients(displayIngredient)
+                       .setCustomRenderer(VanillaTypes.ITEM_STACK, ItemStackCountRenderer.INSTANCE)
+                       .addRichTooltipCallback((slot, tooltip) -> {
+                           if (count > 1) {
+                               tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount", formatCount(count)).withStyle(ChatFormatting.GRAY));
+                           }
+                        if (totalInputCount > ITEM_GRID_MAX_SLOTS) {
+                               tooltip.add(Component.translatable("jei.useless_mod.tooltip.key_input").withStyle(ChatFormatting.AQUA));
+                           }
+                       });
+            }
+        }
+
+        for (int i = 0; i < keyInputs.size(); i++) {
+            int slotIndex = inputCount + i;
+            int row = slotIndex / inputCols;
+            int col = slotIndex % inputCols;
+            int x = INPUT_SLOTS_START_X + (int) (col * inputSpacingX);
+            int y = INPUT_SLOTS_START_Y + (int) (row * inputSpacingY);
+            GenericStack keyInput = keyInputs.get(i);
+            long amount = keyInput.amount();
+            IRecipeSlotBuilder slot = addKeyStack(builder, RecipeIngredientRole.INPUT, x, y, keyInput);
+            if (slot != null) {
+                slot.addRichTooltipCallback((slotView, tooltip) -> {
+                    tooltip.add(Component.translatable("jei.useless_mod.tooltip.key_input").withStyle(ChatFormatting.AQUA));
+                    tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount", formatCount(amount)).withStyle(ChatFormatting.GRAY));
+                });
+            }
+        }
+
+        // 输出物品槽位
+        List<ItemStack> outputs = recipe.outputs();
+        List<GenericStack> keyOutputs = recipe.keyOutputs();
+        int outputCount = outputs.size();
+        int totalOutputCount = outputCount + keyOutputs.size();
+
+        // 计算输出槽位的布局参数（支持超过12个时缩短间距）
+        int outputCols, outputRows;
+        float outputSpacingX, outputSpacingY;
+
+        if (totalOutputCount <= ITEM_GRID_MAX_SLOTS) {
+            outputCols = ITEM_GRID_COLUMNS;
+            outputRows = ITEM_GRID_ROWS;
+            outputSpacingX = INPUT_SLOT_SPACING_X;
+            outputSpacingY = INPUT_SLOT_SPACING_Y;
+        } else {
+            outputCols = (int) Math.ceil(Math.sqrt(totalOutputCount));
+            if (outputCols > 6) outputCols = 6;
+
+            outputRows = (int) Math.ceil((float) totalOutputCount / outputCols);
+
+            float horizontalScale = Math.min(1.0f,
+                    (float) (ITEM_GRID_COLUMNS - 1) / Math.max(1, outputCols - 1));
+            float verticalScale = Math.min(1.0f,
+                    (float) (ITEM_GRID_ROWS - 1) / Math.max(1, outputRows - 1));
+            outputSpacingX = INPUT_SLOT_SPACING_X * horizontalScale;
+            outputSpacingY = INPUT_SLOT_SPACING_Y * verticalScale;
+        }
+
+        for (int i = 0; i < outputCount; i++) {
+            int row = i / outputCols;
+            int col = i % outputCols;
+            int x = OUTPUT_SLOTS_START_X + (int) (col * outputSpacingX);
+            int y = OUTPUT_SLOTS_START_Y + (int) (row * outputSpacingY);
+
+            ItemStack outputStack = outputs.get(i);
+            int count = outputStack.getCount();
+
+            builder.addSlot(RecipeIngredientRole.OUTPUT, x, y)
+                    .addItemStack(outputStack)
+                    .setCustomRenderer(VanillaTypes.ITEM_STACK, ItemStackCountRenderer.INSTANCE)
+                    .addRichTooltipCallback((slot, tooltip) -> {
+                        if (count > 1) {
+                            tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount", formatCount(count)).withStyle(ChatFormatting.GRAY));
+                        }
+                        if (totalOutputCount > ITEM_GRID_MAX_SLOTS) {
+                            tooltip.add(Component.translatable("jei.useless_mod.tooltip.key_output").withStyle(ChatFormatting.AQUA));
+                        }
+                        addRecipeIdTooltip(tooltip, recipe.id());
+                    });
+        }
+
+        for (int i = 0; i < keyOutputs.size(); i++) {
+            int slotIndex = outputCount + i;
+            int row = slotIndex / outputCols;
+            int col = slotIndex % outputCols;
+            int x = OUTPUT_SLOTS_START_X + (int) (col * outputSpacingX);
+            int y = OUTPUT_SLOTS_START_Y + (int) (row * outputSpacingY);
+            GenericStack keyOutput = keyOutputs.get(i);
+            long amount = keyOutput.amount();
+            IRecipeSlotBuilder slot = addKeyStack(builder, RecipeIngredientRole.OUTPUT, x, y, keyOutput);
+            if (slot != null) {
+                slot.addRichTooltipCallback((slotView, tooltip) -> {
+                    tooltip.add(Component.translatable("jei.useless_mod.tooltip.key_output").withStyle(ChatFormatting.AQUA));
+                    tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount", formatCount(amount)).withStyle(ChatFormatting.GRAY));
+                    addRecipeIdTooltip(tooltip, recipe.id());
+                });
+            }
+        }
+
+        // 输入流体槽 - 使用JEI内置流体渲染器
+        List<LongSizedFluidIngredient> inputFluids = recipe.inputFluids();
+        if (!inputFluids.isEmpty()) {
+            int fluidCount = inputFluids.size();
+            int fluidWidth = FLUID_INPUT_WIDTH / fluidCount;
+
+            for (int i = 0; i < fluidCount; i++) {
+                var input = inputFluids.get(i);
+                FluidStack[] candidates = input.getRepresentatives();
+                FluidStack fluid = candidates.length == 0
+                        ? AdapterUtils.fluidRepresentative(input.ingredient(), 1)
+                        : candidates[0];
+                if (fluid == null || fluid.isEmpty()) continue;
+                int x = FLUID_INPUT_X + i * fluidWidth;
+                long amount = input.amount();
+                int displayAmount = (int) Math.min(amount, Integer.MAX_VALUE);
+
+                IRecipeSlotBuilder slot = builder.addSlot(RecipeIngredientRole.INPUT, x, FLUID_INPUT_Y)
+                        .setFluidRenderer(displayAmount, false, fluidWidth, FLUID_INPUT_HEIGHT);
+                if (candidates.length == 0) {
+                    slot.addFluidStack(fluid.getFluid(), displayAmount);
+                } else {
+                    for (FluidStack candidate : candidates) {
+                        if (candidate != null && !candidate.isEmpty()) {
+                            slot.addFluidStack(candidate.getFluid(), displayAmount);
+                        }
+                    }
+                }
+                slot.addRichTooltipCallback((slotView, tooltip) -> {
+                    tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount.mb", formatCount(amount)).withStyle(ChatFormatting.GRAY));
+                });
+            }
+        }
+
+        // 输出流体槽 - 使用JEI内置流体渲染器
+        List<FluidStack> outputFluids = recipe.outputFluids();
+        if (!outputFluids.isEmpty()) {
+            int fluidCount = outputFluids.size();
+            int fluidWidth = FLUID_OUTPUT_WIDTH / fluidCount;
+
+            for (int i = 0; i < fluidCount; i++) {
+                FluidStack fluid = outputFluids.get(i);
+                int x = FLUID_OUTPUT_X + i * fluidWidth;
+                int amount = fluid.getAmount();
+
+                builder.addSlot(RecipeIngredientRole.OUTPUT, x, FLUID_OUTPUT_Y)
+                       .setFluidRenderer(amount, false, fluidWidth, FLUID_OUTPUT_HEIGHT)
+                       .addFluidStack(fluid.getFluid(), amount)
+                       .addRichTooltipCallback((slot, tooltip) -> {
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.amount.mb", formatCount(amount)).withStyle(ChatFormatting.GRAY));
+                           addRecipeIdTooltip(tooltip, recipe.id());
+                       });
+            }
+        }
+
+        // 催化剂槽位（普通配方可用）
+        List<ItemStack> catalystStacks = new ArrayList<>();
+
+        if (!isUselessRecipe) {
+            // 普通配方：使用ModTags.CATALYSTS轮询显示所有催化剂（可选）
+            BuiltInRegistries.ITEM.getTag(ModTags.CATALYSTS).ifPresent(tag -> {
+                for (var holder : tag) {
+                    ItemStack displayStack = new ItemStack(holder.value());
+                    displayStack.setCount(1);
+                    catalystStacks.add(displayStack);
+                }
+            });
+        }
+
+        if (!catalystStacks.isEmpty()) {
+            builder.addSlot(RecipeIngredientRole.CATALYST, CATALYST_SLOT_X, CATALYST_SLOT_Y)
+                   .addIngredients(Ingredient.of(catalystStacks.toArray(new ItemStack[0])))
+                   .addRichTooltipCallback((slot, tooltip) -> {
+                       tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst").withStyle(ChatFormatting.GOLD));
+                       int tier = getTargetUselessIngotTier(recipe);
+                       if (tier > 0) {
+                           // 无用锭配方：显示并行数信息
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.useless_ingot.title").withStyle(ChatFormatting.YELLOW));
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.useless_ingot.desc2").withStyle(ChatFormatting.GREEN));
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.useless_ingot.desc3").withStyle(ChatFormatting.BLUE));
+                       } else if (!isUselessRecipe) {
+                           // 普通配方
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.normal.desc1").withStyle(ChatFormatting.GRAY));
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.normal.desc2").withStyle(ChatFormatting.GRAY));
+                           tooltip.add(Component.translatable("jei.useless_mod.tooltip.catalyst.normal.desc3").withStyle(ChatFormatting.BLUE));
+                       }
+                   });
+        }
+
+        // Each independent mold requirement gets its own mandatory JEI slot.
+        List<Ingredient> molds = recipe.molds();
+        for (int index = 0; index < molds.size(); index++) {
+            builder.addSlot(RecipeIngredientRole.CATALYST, moldSlotX(molds.size(), index), MOLD_SLOT_Y)
+                   .addIngredients(molds.get(index));
+        }
+    }
+
+    @Override
+    public void draw(@NotNull AlloyFurnaceRecipeCatalog.Entry entry,
+                     @NotNull IRecipeSlotsView recipeSlotsView,
+                     @NotNull GuiGraphics guiGraphics, double mouseX, double mouseY) {
+        AdvancedAlloyFurnaceRecipe recipe = entry.recipe();
+        // 绘制背景
+        this.background.draw(guiGraphics);
+
+        // 绘制进度条 - 2秒完成一次合成进度
+        long currentTime = System.currentTimeMillis();
+        float progressRatio = (currentTime % 2000) / 2000.0f; // 2秒周期
+
+        int progressWidth = (int) (PROGRESS_BAR_WIDTH * progressRatio);
+        if (progressWidth > 0) {
+            guiGraphics.blit(GUI_TEXTURE,
+                             PROGRESS_BAR_X, PROGRESS_BAR_Y,
+                             PROGRESS_BAR_SOURCE_X, PROGRESS_BAR_SOURCE_Y,
+                             progressWidth, PROGRESS_BAR_HEIGHT,
+                             256, 256
+            );
+        }
+
+        // 绘制能量和时间信息
+        Minecraft minecraft = Minecraft.getInstance();
+
+        // 格式化能量显示
+        String energyText = this.formatEnergy(recipe.energy());
+        String timeText = recipe.processTime() + " ticks";
+
+        // 在能量显示区域居中显示能量（绿色）- 使用缩小字体
+        guiGraphics.pose().pushPose();
+        float energyScale = 0.8f;
+        guiGraphics.pose().scale(energyScale, energyScale, 1.0f);
+        int energyTextWidth = minecraft.font.width(energyText);
+        int energyX = (int) ((ENERGY_DISPLAY_X + (ENERGY_DISPLAY_WIDTH - energyTextWidth * energyScale) / 2) / energyScale);
+        int energyY = (int) (ENERGY_DISPLAY_Y / energyScale);
+        guiGraphics.drawString(minecraft.font, energyText, energyX, energyY, 0x00FF00, false);
+        guiGraphics.pose().popPose();
+
+        // 在时间显示区域居中显示时间（绿色）- 使用缩小字体，位置往下移动
+        guiGraphics.pose().pushPose();
+        float timeScale = 0.8f;
+        guiGraphics.pose().scale(timeScale, timeScale, 1.0f);
+        int timeTextWidth = minecraft.font.width(timeText);
+        int timeX = (int) ((TIME_DISPLAY_X + (TIME_DISPLAY_WIDTH - timeTextWidth * timeScale) / 2) / timeScale);
+        int timeY = (int) ((TIME_DISPLAY_Y + 1) / timeScale);
+        guiGraphics.drawString(minecraft.font, timeText, timeX, timeY, 0x00FF00, false);
+        guiGraphics.pose().popPose();
+
+        
+
+        guiGraphics.pose().pushPose();
+        float scale = 0.7f;
+        guiGraphics.pose().scale(scale, scale, 1.0f);
+
+        int requiredTier = AlloyFurnaceTierRules.requiredTier(recipe.id(), recipe.tier());
+        String requirementText = requiredTier > 0
+                ? Component.translatable("jei.useless_mod.gui.tier_required", requiredTier).getString()
+                : Component.translatable("jei.useless_mod.gui.tier_unrestricted").getString();
+        int textWidth = minecraft.font.width(requirementText);
+        int centeredX = (int) ((DISPLAY_WIDTH / 2.0f - textWidth * scale / 2) / scale);
+        int y = (int) (REQUIREMENT_TEXT_Y / scale);
+
+        guiGraphics.drawString(minecraft.font, requirementText, centeredX, y,
+                requiredTier > 0 ? 0xFF0000 : 0x404040, false);
+        guiGraphics.pose().popPose();
+    }
+
+    // 修改工具提示方法，添加并行数信息
+    @Override
+    public void getTooltip(@NotNull ITooltipBuilder tooltip,
+                           @NotNull AlloyFurnaceRecipeCatalog.Entry entry,
+                           @NotNull IRecipeSlotsView recipeSlotsView,
+                           double mouseX, double mouseY) {
+        AdvancedAlloyFurnaceRecipe recipe = entry.recipe();
+        // 能量和时间显示的悬停提示
+        if (mouseX >= ENERGY_DISPLAY_X && mouseX <= ENERGY_DISPLAY_X + ENERGY_DISPLAY_WIDTH &&
+                mouseY >= ENERGY_DISPLAY_Y && mouseY <= ENERGY_DISPLAY_Y + ENERGY_DISPLAY_HEIGHT) {
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.energy.base", this.formatEnergy(recipe.energy())));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.energy.actual"));
+        }
+
+        // 时间显示区域
+        if (mouseX >= TIME_DISPLAY_X && mouseX <= TIME_DISPLAY_X + TIME_DISPLAY_WIDTH &&
+                mouseY >= TIME_DISPLAY_Y && mouseY <= TIME_DISPLAY_Y + TIME_DISPLAY_HEIGHT) {
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.process_time", recipe.processTime()));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.process_time.note"));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.process_time.coil_bonus")
+                    .withStyle(ChatFormatting.BLUE));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.process_time.coil_useful")
+                    .withStyle(ChatFormatting.BLUE));
+        }
+
+        // 并行数效果说明区域 - 只在显示红色提示文本时（非无用锭配方且允许催化剂）才渲染
+        if (mouseX >= PARALLEL_TEXT_X && mouseX <= PARALLEL_TEXT_X + 120 &&
+                mouseY >= PARALLEL_TEXT_Y && mouseY <= PARALLEL_TEXT_Y + 10 &&
+                !recipe.catalyst().isEmpty() && isUselessIngotRecipe(recipe)) {
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.title").withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.desc1").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.desc2").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.desc3").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.desc4").withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.parallel.warning").withStyle(ChatFormatting.RED));
+        }
+    }
+
+    private static void addRecipeIdTooltip(ITooltipBuilder tooltip, ResourceLocation recipeId) {
+        if (Screen.hasShiftDown()) {
+            tooltip.add(Component.translatable("jei.useless_mod.tooltip.recipe_id", recipeId.toString())
+                    .withStyle(ChatFormatting.GRAY));
+        }
+    }
+
+    // 格式化能量显示
+    private String formatEnergy(long energy) {
+        if (energy >= 1_000_000_000_000_000_000L) {
+            return String.format("%.2fE FE", energy / 1_000_000_000_000_000_000.0);
+        } else if (energy >= 1_000_000_000_000_000L) {
+            return String.format("%.2fP FE", energy / 1_000_000_000_000_000.0);
+        } else if (energy >= 1_000_000_000_000L) {
+            return String.format("%.2fT FE", energy / 1_000_000_000_000.0);
+        } else if (energy >= 1_000_000_000L) {
+            return String.format("%.2fG FE", energy / 1_000_000_000.0);
+        } else if (energy >= 1_000_000L) {
+            return String.format("%.2fM FE", energy / 1_000_000.0);
+        } else if (energy >= 1_000L) {
+            return String.format("%.2fk FE", energy / 1_000.0);
+        } else {
+            return energy + " FE";
+        }
+    }
+
+    // 格式化物品数量
+    private String formatCount(long count) {
+        if (count >= 1000000000) {
+            return String.format("%.2fG", count / 1000000000.0);
+        } else if (count >= 1000000) {
+            return String.format("%.2fM", count / 1000000.0);
+        } else if (count >= 1000) {
+            return String.format("%.2fk", count / 1000.0);
+        } else {
+            return String.valueOf(count);
+        }
+    }
+
+    private static int moldSlotX(int count, int index) {
+        if (count <= 1) return MOLD_SLOT_START_X;
+
+        float spacing = Math.min(MOLD_SLOT_SPACING,
+                (MOLD_SLOT_END_X - MOLD_SLOT_START_X) / (float) (count - 1));
+        return Math.round(MOLD_SLOT_START_X + index * spacing);
+    }
+
+    private static IRecipeSlotBuilder addKeyStack(IRecipeLayoutBuilder builder,
+                                                    RecipeIngredientRole role,
+                                                    int x,
+                                                    int y,
+                                                    GenericStack stack) {
+        GenericStackJeiIngredientProvider.Ingredient nativeIngredient =
+                GenericStackJeiIngredientProviders.resolve(stack);
+        if (nativeIngredient != null) {
+            IRecipeSlotBuilder slot = builder.addSlot(role, x, y);
+            nativeIngredient.addTo(slot);
+            return slot;
+        }
+
+        ItemStack displayStack = GenericStack.wrapInItemStack(
+                stack.what(), (int) Math.min(stack.amount(), Integer.MAX_VALUE));
+        if (displayStack.isEmpty()) return null;
+        return builder.addSlot(role, x, y)
+                .addItemStack(displayStack)
+                .setCustomRenderer(VanillaTypes.ITEM_STACK, ItemStackCountRenderer.INSTANCE);
+    }
+
+    // 判断是否是无用锭配方（根据输出物品判断）
+    private boolean isUselessIngotRecipe(AdvancedAlloyFurnaceRecipe recipe) {
+        return getTargetUselessIngotTier(recipe) <= 0;
+    }
+
+    // 获取目标无用锭等级
+    private int getTargetUselessIngotTier(AdvancedAlloyFurnaceRecipe recipe) {
+        List<ItemStack> outputs = recipe.outputs();
+        if (outputs.isEmpty()) return 0;
+
+        for (ItemStack output : outputs) {
+            int tier = CatalystParallelManager.getTargetUselessIngotTier(output);
+            if (tier > 0) {
+                return tier;
+            }
+        }
+        return 0;
+    }
+}

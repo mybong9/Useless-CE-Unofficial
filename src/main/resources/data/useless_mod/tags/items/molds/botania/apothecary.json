@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "botania:apothecary_default",
+      "required": false
+    },
+    {
+      "id": "botanicalmachinery:mechanical_apothecary",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:base_apothecary",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:upgraded_apothecary",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:advanced_apothecary",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:ultimate_apothecary",
+      "required": false
+    }
+  ]
+}

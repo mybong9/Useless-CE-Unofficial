@@ -1,0 +1,21 @@
+plugins { id 'base' }
+
+// ForgeGradle's full dependency list exceeds Windows' command-line limit.
+subprojects {
+    // Mixin's processor must regenerate the mapping file consumed by reobf.
+    tasks.withType(JavaCompile).configureEach { options.incremental = false }
+    tasks.matching { it.name == 'reobfJar' || it.name == 'reobfJarJar' }.configureEach { useArgsFile() }
+}
+
+tasks.register('packageMods', Copy) {
+    group = 'build'
+    description = 'Compile and reobfuscate all Forge mods, then collect their JARs.'
+    dependsOn ':useless_core:reobfJarJar', ':useless_mod:reobfJar', ':useless_stretcher:reobfJar', ':useless_generators:reobfJar'
+    into layout.projectDirectory.dir('dist')
+    from({ project(':useless_core').tasks.named('jarJar', Jar).get().archiveFile.get().asFile }) {
+        rename { it.replace('-all.jar', '.jar') }
+    }
+    [':useless_mod', ':useless_stretcher', ':useless_generators'].each { modProject ->
+        from { project(modProject).tasks.named('jar', Jar).get().archiveFile.get().asFile }
+    }
+}

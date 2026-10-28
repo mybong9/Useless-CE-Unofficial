@@ -1,0 +1,27 @@
+{
+  "required": false,
+  "package": "com.sorrowmist.useless.mixin.mek",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "CachedRecipeMixin",
+    "DigitalMinerMixin",
+    "ElectricPumpMixin",
+    "FluidicPlenisherMixin",
+    "FormulaicAssemblicatorMixin",
+    "FuckingPrideHolidayMixin",
+    "MekanismUtilsMixin",
+    "TileComponentEjectorMixin",
+    "TileEntityDigitalMinerMixin",
+    "UpgradeMixin",
+    "UpgradeUtilsMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "refmap": "useless_mod.refmap.json",
+  "plugin": "com.sorrowmist.useless.mixin.UselessMixinPlugin",
+  "minVersion": "0.8.5"
+}

@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "mythicbotany:mana_infuser",
+      "required": false
+    },
+    {
+      "id": "botanicalmachinery:mechanical_mana_infuser",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:base_mana_infuser",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:upgraded_mana_infuser",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:advanced_mana_infuser",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:ultimate_mana_infuser",
+      "required": false
+    }
+  ]
+}

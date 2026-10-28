@@ -1,0 +1,73 @@
+{
+  "required": false,
+  "package": "com.sorrowmist.useless.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "tconstruct.TinkerHarvestMixin",
+    "ftbultimine.OwnedChainMiningMixin",
+    "eae.EaepBookmarkPatternMixin",
+    "EntityMixin",
+    "EntityGetterMixin",
+    "LivingEntityMixin",
+    "PlayerMixin",
+    "MobStealthMixin",
+    "StealthTargetingConditionsMixin",
+    "ServerLevelMixin",
+    "LevelMixin",
+    "ServerPlayerGameModeMixin",
+    "ServerGamePacketListenerImplFlightMixin",
+    "ae2.CraftingCpuLogicAccessor",
+    "ae2.CraftingCalculationSmartDoublingMixin",
+    "ae2.CraftingSimulationStateAccessor",
+    "ae2.CraftingSimulationStateSmartDoublingMixin",
+    "ae2.CraftingServiceSmartDoublingMixin",
+    "ae2.CraftingTreeProcessMixin",
+    "ae2.ExecutingCraftingJobAccessor",
+    "ae2.ElapsedTimeTrackerAccessor",
+    "ae2.CraftingCpuLogicMixin",
+    "ae2lt.TimeWheelCpuArithmeticMixin",
+    "ae2.ExecutingCraftingJobMixin",
+    "ae2.AEProcessingPatternMixin",
+    "ae2.PatternEncodingLogicMixin",
+    "ae2.PatternEncodingTermMenuMixin",
+    "ae2.OmniversalLargeProcessingPatternMixin",
+    "ae2.PatternDetailsHelperOccultismMixin",
+    "ae2.PatternDetailsHelperSmartDoublingMixin",
+    "ae2.ConstructionPatternProviderMixin",
+    "ae2.PathingCalculationMixin",
+    "ae2.PathingServiceMixin",
+    "ae2.GridNodeMixin",
+    "advancedae.AdvancedCraftingCpuAccessor",
+    "advancedae.CraftingCpuLogicMixin",
+    "advancedae.ExecutingCraftingJobMixin",
+    "eae.PatternSlotTrackerMixin",
+    "eae.TileAssemblerMatrixPatternMixin",
+    "accessor.BeeAccessor",
+    "accessor.TurtleAccessor",
+    "botanypots.BlockEntityBotanyPotMixin",
+    "accessor.BlockEntityBotanyPotAccessor"
+  ],
+  "server": [
+    "ServerGamePacketListenerImplMixin"
+  ],
+  "client": [
+    "emi.AeEmiPatternTransferMixin",
+    "eae.EaepBookmarkClientMixin",
+    "ClientLevelMixin",
+    "ClientPacketListenerMixin",
+    "LocalPlayerMixin",
+    "MultiPlayerGameModeMixin",
+    "botanypots.BotanyPotRendererMixin",
+    "botanypots.PhasedDisplayStateRendererMixin",
+    "eae.GuiAssemblerMatrixPatternInfoMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "refmap": "useless_mod.refmap.json",
+  "plugin": "com.sorrowmist.useless.mixin.UselessMixinPlugin",
+  "minVersion": "0.8.5"
+}

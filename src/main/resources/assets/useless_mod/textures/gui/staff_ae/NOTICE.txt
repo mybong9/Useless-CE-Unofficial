@@ -1,0 +1,9 @@
+Original AE2 19.2.17 interface artwork, used by Useless Mod 1.21 / Useless Stretcher 1.6.0.
+Files: button.png, button_highlighted.png, button_disabled.png, background.png
+Unmodified PNG files. Adapted only at runtime to the Minecraft 1.20.1 GUI API.
+Copyright (c) 2020 Ridanisaurus Rid; (c) 2013-2020 AlgorithmX2 et al.
+Textures and Models license: Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported.
+https://creativecommons.org/licenses/by-nc-sa/3.0/
+Source: https://github.com/AppliedEnergistics/Applied-Energistics-2
+License attribution: https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/main/README.md#license
+These files retain their original asset license, separate from the Java source license.

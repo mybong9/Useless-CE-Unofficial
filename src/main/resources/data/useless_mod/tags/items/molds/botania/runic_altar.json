@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "botania:runic_altar",
+      "required": false
+    },
+    {
+      "id": "botanicalmachinery:mechanical_runic_altar",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:base_runic_altar",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:upgraded_runic_altar",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:advanced_runic_altar",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:ultimate_runic_altar",
+      "required": false
+    }
+  ]
+}

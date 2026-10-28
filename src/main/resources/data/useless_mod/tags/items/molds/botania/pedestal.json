@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "extrabotany:pedestal_livingrock", "required": false },
+    { "id": "extrabotany:pedestal_calcite", "required": false }
+  ]
+}

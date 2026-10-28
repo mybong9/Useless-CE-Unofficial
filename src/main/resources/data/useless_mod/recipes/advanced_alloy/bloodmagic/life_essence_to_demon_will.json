@@ -1,0 +1,40 @@
+{
+  "type": "useless_mod:advanced_alloy_furnace",
+  "id": "useless_mod:advanced_alloy/bloodmagic/life_essence_to_demon_will",
+  "conditions": [
+    {
+      "type": "forge:mod_loaded",
+      "modid": "bloodmagic"
+    }
+  ],
+  "ingredients": [],
+  "input_fluids": [
+    {
+      "amount": 10000,
+      "ingredient": [
+        {
+          "type": "single",
+          "fluid": {
+            "FluidName": "bloodmagic:life_essence_fluid",
+            "Amount": 1
+          }
+        }
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "id": "bloodmagic:basemonstersoul",
+      "count": 1,
+      "tag": {
+        "souls": 100.0
+      }
+    }
+  ],
+  "mold": {
+    "item": "bloodmagic:altar"
+  },
+  "energy": 20000,
+  "process_time": 200,
+  "tier": 1
+}

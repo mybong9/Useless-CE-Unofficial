@@ -1,0 +1,96 @@
+// Optional integration APIs, pinned to Forge 1.20.1 releases.
+dependencies {
+    compileOnly fg.deobf('curse.maven:flux-networks-248020:5234697')
+    compileOnly fg.deobf('maven.modrinth:applied-mekanistics:9n9p68Qq') // 1.4.3
+    compileOnly fg.deobf('maven.modrinth:applied-pneumatics:QH8D7GGN') // 1.0.8
+    compileOnly fg.deobf('maven.modrinth:ars-energistique:xpgyRm6m') // 1.2.0
+    compileOnly fg.deobf('maven.modrinth:ars-nouveau:Hw2aD01e') // 4.12.7
+    compileOnly fg.deobf('maven.modrinth:brandons-core:qFTHdrDH') // 3.2.1.302
+    compileOnly fg.deobf('maven.modrinth:brewin-and-chewin:9myDFPCD') // 1.20.1-3.2.1
+    compileOnly fg.deobf('maven.modrinth:codechicken-lib:5zfJEMhM') // 4.4.0.528
+    compileOnly fg.deobf('maven.modrinth:crabbers-delight:9NT9IkSs') // 1.2.3
+    compileOnly fg.deobf('maven.modrinth:create:8amzvn9x') // mc1.20.1-6.0.8
+    compileOnly fg.deobf('maven.modrinth:cucumber:xnLznSfT') // 7.0.16
+    compileOnly fg.deobf('maven.modrinth:cultural-delights:mO8IB07o') // 0.16.7
+    compileOnly fg.deobf('maven.modrinth:curios:IPQlZkz1') // 5.14.1+1.20.1
+    compileOnly fg.deobf('maven.modrinth:draconic-evolution:YR33MHbk') // 3.1.2.621
+    compileOnly fg.deobf('maven.modrinth:enderio:nJnmg29v') // 6.2.18-beta
+    compileOnly fg.deobf('maven.modrinth:enders-delight:Jaf9wxnO') // 1.1.4
+    compileOnly fg.deobf('maven.modrinth:ends-delight:FHVQqUkN') // 2.6.1+forge.1.20.1
+    compileOnly fg.deobf('maven.modrinth:ex-deorum:9lT0xIkP') // 1.53
+    compileOnly fg.deobf('maven.modrinth:extended-crafting:NtEZsGjO') // 6.0.10
+    compileOnly fg.deobf('maven.modrinth:extreme-reactors:5A5jbWkI') // 1.20.1-2.0.84
+    compileOnly fg.deobf('maven.modrinth:farmers-delight:SiIpcZzM') // 1.20.1-1.3.4
+    compileOnly fg.deobf('maven.modrinth:forbidden-arcanus:1GswR5qC') // 1.20.1-2.2.6
+    compileOnly fg.deobf('maven.modrinth:hostile-neural-networks:6ByGTKSc') // 5.3.3
+    compileOnly fg.deobf('maven.modrinth:immersiveengineering:WUzj4tgJ') // 10.2.0-183
+    compileOnly fg.deobf('maven.modrinth:irons-lib:6HqXQkgC') // 1.20.1-2.2.0
+    compileOnly fg.deobf('maven.modrinth:irons-spells-n-spellbooks:hZaEegS9') // 1.20.1-3.16.3
+    compileOnly fg.deobf('maven.modrinth:jade:xJQHCmWJ') // 11.13.3+forge
+    compileOnly fg.deobf('maven.modrinth:kiwi:NSxwah05') // 11.10.3+forge
+    compileOnly fg.deobf('maven.modrinth:kubejs:hVR2xUSr') // 2001.6.5-build.26+forge
+    compileOnly fg.deobf('maven.modrinth:lychee:xRmDtY9h') // 5.2.1+forge
+    compileOnly fg.deobf('maven.modrinth:malum:U88VbrNU') // 1.20.1-1.6.7
+    compileOnly fg.deobf('maven.modrinth:modonomicon:J0YtwRxM') // 1.20.1-1.79.3
+    compileOnly fg.deobf('maven.modrinth:mystical-agriculture:EEilTecF') // 7.0.24
+    compileOnly fg.deobf('maven.modrinth:natures-aura:8UiPp0gC') // 39.4
+    compileOnly fg.deobf('maven.modrinth:occultism:hs5pHmiU') // 1.20.1-1.158.0
+    compileOnly fg.deobf('maven.modrinth:pneumaticcraft-repressurized:ohRZqkHb') // 6.0.23
+    compileOnly fg.deobf('maven.modrinth:powah:xDOvxyqP') // 5.0.11-forge
+    compileOnly fg.deobf('maven.modrinth:re-avaritia:trZJ7YBv') // 1.20.1-1.4.2-release
+    compileOnly fg.deobf('maven.modrinth:rhino:uNALdylI') // 2001.2.3-build.10+forge
+    compileOnly fg.deobf('maven.modrinth:smartbrainlib:YkeJNm33') // 1.15
+    compileOnly fg.deobf('maven.modrinth:summoningrituals:onR21RXD') // 1.20.1-2.0.9+forge
+    compileOnly fg.deobf('maven.modrinth:ubes-delight:FOEkFTgl') // forge-1.20.1-0.4.15
+    compileOnly fg.deobf('maven.modrinth:valhelsia-core:eP3L8E7C') // 1.1.2
+    compileOnly fg.deobf('maven.modrinth:zerocore:OIzaNrPI') // 1.20.1-2.1.45
+    compileOnly fg.deobf('maven.modrinth:ae2-crystal-science:VGhHOKsP') // 1.20.1-1.2.0
+    compileOnly fg.deobf('maven.modrinth:ae2-lightning-tech:eS1qyjYH') // 2.1.2-beta2-forge.1.20.1
+    compileOnly fg.deobf('maven.modrinth:casualness-delight:p6Z5Qd84') // 1.20.1-0.4n
+    compileOnly fg.deobf('maven.modrinth:farmers-respite:kucmCxP0') // 1.20.1-2.1
+    compileOnly fg.deobf('maven.modrinth:kaleidoscope-cookery:Ghp0qCKY') // 1.6.0-forge+mc1.20.1
+    compileOnly fg.deobf('maven.modrinth:kaleidoscope-grilling:dwwwzjdV') // 1.1.1
+    compileOnly fg.deobf('maven.modrinth:kaleidoscopetavern:mUnU2u9e') // 1.2.0-forge+mc1.20.1
+    compileOnly fg.deobf('maven.modrinth:lodestonelib:dRIycWqx') // 1.20.1-1.6.4.1
+    compileOnly fg.deobf('maven.modrinth:mystical-agradditions:48qKWNA7') // 7.0.12
+    compileOnly fg.deobf('maven.modrinth:productivebees:mywVOObd') // 1.20.1-12.6.0
+    compileOnly fg.deobf('maven.modrinth:thunderbolt-core:tqklE20T') // 2.0.3-beta2-forge.1.20.1
+    compileOnly fg.deobf('dev.ftb.mods:ftb-chunks-forge:2001.3.8')
+    compileOnly fg.deobf('dev.ftb.mods:ftb-teams-forge:2001.3.2')
+}
+
+dependencies {
+    compileOnly fg.deobf('maven.modrinth:botania:npY4sRWF')
+    compileOnly fg.deobf('maven.modrinth:blood-magic:1YxwR16I')
+    compileOnly fg.deobf('maven.modrinth:mythicbotany:1IR2M8cY')
+    compileOnly fg.deobf('maven.modrinth:extrabotany:cX16qAh2')
+}
+
+dependencies {
+    compileOnly fg.deobf('maven.modrinth:botanical-machinery:nWd5gpH8')
+
+}
+
+
+dependencies {
+    compileOnly fg.deobf('maven.modrinth:mekanism_extra:9T6CetkG')
+    compileOnly fg.deobf('maven.modrinth:mekanismmoremachine:PQ3IlR98')
+    compileOnly fg.deobf('maven.modrinth:botany-pots:GHNPFUnp')
+}
+
+dependencies {
+    compileOnly fg.deobf('local.ifeu:ifeu:1.20.1-2.4.000')
+}
+
+dependencies {
+    compileOnly fg.deobf('curse.maven:youkais-homecoming-957437:9117307')
+}
+
+dependencies {
+    compileOnly fg.deobf('maven.modrinth:bookshelf-lib:7eS5OIHj')
+}
+
+dependencies {
+    compileOnly fg.deobf('local.ae2addonlib:ae2addonlib:1.20.1-1.0.4')
+    compileOnly fg.deobf('local.ponder:ponder:1.20.1-1.0.91')
+}

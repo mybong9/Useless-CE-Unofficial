@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "JJJ",
+    "JDJ",
+    "JJJ"
+  ],
+  "key": {
+    "J": {
+      "item": "useless_mod:omniversal_forge_frame"
+    },
+    "D": {
+      "item": "minecraft:green_dye"
+    }
+  },
+  "result": {
+    "item": "useless_mod:omniversal_trigram_zhen",
+    "count": 8
+  }
+}

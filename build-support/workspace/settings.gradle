@@ -1,0 +1,15 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven { url = 'https://maven.minecraftforge.net/' }
+        maven { url = 'https://maven.parchmentmc.org' }
+    }
+}
+
+rootProject.name = 'UselessForge-1.20.1'
+include ':useless_core', ':useless_mod', ':useless_stretcher'
+project(':useless_core').projectDir = file('UselessCore')
+project(':useless_mod').projectDir = file('UselessMod')
+project(':useless_stretcher').projectDir = file('UselessStretcher')
+include ':useless_generators'
+project(':useless_generators').projectDir = file('UselessGenerators')

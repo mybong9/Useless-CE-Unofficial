@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    "CCC"
+  ],
+  "key": {
+    "C": {
+      "item": "useless_mod:omniversal_forge_copper"
+    }
+  },
+  "result": {
+    "item": "useless_mod:omniversal_forge_trim",
+    "count": 6
+  }
+}

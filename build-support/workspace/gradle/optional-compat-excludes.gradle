@@ -1,0 +1,55 @@
+// The user explicitly excluded these integrations from the Forge 1.20.1 port.
+sourceSets.main.java {
+    exclude 'com/sorrowmist/useless/compat/neovitae/**'
+    exclude 'com/sorrowmist/useless/compat/oritech/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/neovitae/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/oritech/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/justdirethings/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/ae/dataenergistics/**'
+    exclude 'com/sorrowmist/useless/integration/dataenergistics/**'
+}
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/actuallyadditions/**'
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/astralsorcery/**'
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/modernindustrialization/**'
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/apothicflux/**'
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/compat/apothicflux/**'
+
+sourceSets.main.java.exclude 'com/sorrowmist/useless/compat/modernindustrialization/MiEnergyCompat.java'
+
+// No native Forge 1.20.1 releases: UFO Future and Modern Industrialization.
+sourceSets.main.java {
+    exclude 'com/sorrowmist/useless/compat/ufo/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/ufo/**'
+    exclude 'com/sorrowmist/useless/compat/modernindustrialization/**'
+}
+
+// Extra Delight and Barbeque's Delight are excluded at the user's request.
+// Expanded Delight and Nomad's Delight have no supported Forge 1.20.1 API here.
+sourceSets.main.java {
+    exclude 'com/sorrowmist/useless/compat/extradelight/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/delight/extradelight/**'
+    exclude 'com/sorrowmist/useless/compat/expandeddelight/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/delight/expandeddelight/**'
+    exclude 'com/sorrowmist/useless/compat/nomadsdelight/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/delight/nomadsdelight/**'
+    exclude 'com/sorrowmist/useless/compat/barbequesdelight/**'
+    exclude 'com/sorrowmist/useless/content/recipe/adapters/delight/barbequesdelight/**'
+}
+
+// Botany Pots 13 uses BlockEntityBotanyPot; the original 1.20.1 implementation is active.
+sourceSets.main.java {
+    exclude 'com/sorrowmist/useless/mixin/botanypots/AbstractBotanyPotBlockEntityAccessor.java'
+    exclude 'com/sorrowmist/useless/mixin/botanypots/BotanyPotBlockEntityAccessor.java'
+    exclude 'com/sorrowmist/useless/mixin/botanypots/BotanyPotBlockEntityMixin.java'
+}
+
+// The crystal assembler does not exist in ExtendedAE's Forge 1.20.1 release.
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/ae/extendedae/CrystalAssemblerRecipeAdapter.java'
+
+// Ender IO 6.2.18 for Forge 1.20.1 has no Vat machine or fermentation recipe type.
+sourceSets.main.java.exclude 'com/sorrowmist/useless/content/recipe/adapters/enderio/VatFermentingRecipeAdapter.java'

@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "botania:brewery", "required": false },
+    { "id": "botanicalmachinery:mechanical_brewery", "required": false }
+  ]
+}

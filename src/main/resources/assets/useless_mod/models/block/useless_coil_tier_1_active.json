@@ -1,0 +1,78 @@
+{
+  "parent": "minecraft:block/block",
+  "textures": {
+    "all": "useless_mod:block/multiblock_alloy_furnace/coils/useless_coil_tier_1_active",
+    "particle": "#all"
+  },
+  "elements": [
+    {
+      "from": [
+        0,
+        0,
+        0
+      ],
+      "to": [
+        16,
+        16,
+        16
+      ],
+      "shade": false,
+      "faces": {
+        "down": {
+          "texture": "#all",
+          "cullface": "down",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        },
+        "up": {
+          "texture": "#all",
+          "cullface": "up",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        },
+        "north": {
+          "texture": "#all",
+          "cullface": "north",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        },
+        "south": {
+          "texture": "#all",
+          "cullface": "south",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        },
+        "west": {
+          "texture": "#all",
+          "cullface": "west",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        },
+        "east": {
+          "texture": "#all",
+          "cullface": "east",
+          "forge_data": {
+            "block_light": 12,
+            "sky_light": 12,
+            "ambient_occlusion": false
+          }
+        }
+      }
+    }
+  ]
+}

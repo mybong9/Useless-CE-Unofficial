@@ -1,0 +1,42 @@
+[
+  {
+    "workspace_path": "UselessMod/libs/neoecoae-20.5.1.jar",
+    "bytes": 7650126,
+    "sha256": "a44268d5895dcb4ac99f327ed744fe3a7f94dc224a85e57bc27ac13dc8ed8d3b"
+  },
+  {
+    "workspace_path": "UselessMod/libs/Registrate-MC1.20-1.3.11.jar",
+    "bytes": 170445,
+    "sha256": "81c5041b9a0017c5ac61c46655e984f78d711a6981330567d6fddfbde0385449"
+  },
+  {
+    "workspace_path": "UselessMod/libs/mixinextras-common-0.5.5.jar",
+    "bytes": 715878,
+    "sha256": "a3590ce69cec77141990eb439de790b9c162504fab2ba29fec77850136120b0b"
+  },
+  {
+    "workspace_path": "UselessMod/libs/mixinextras-forge-0.5.5.jar",
+    "bytes": 634106,
+    "sha256": "42564e02756fbdf78e1f1fd2115fe2d01fb42497ba3be2a3c261da2058122533"
+  },
+  {
+    "workspace_path": "UselessMod/libs/ifeu-1.20.1-2.4.000.jar",
+    "bytes": 881619,
+    "sha256": "2702c64cc75688c8ebccb3cb5a513777e54095eb090c10dfe675547a72649379"
+  },
+  {
+    "workspace_path": "UselessMod/libs/ae2addonlib-1.20.1-1.0.4.jar",
+    "bytes": 195270,
+    "sha256": "47bbd147a155c24aa58944a6b52eec7935cc4135bbf2e68f89208993c7538501"
+  },
+  {
+    "workspace_path": "UselessMod/libs/ponder-1.20.1-1.0.91.jar",
+    "bytes": 790401,
+    "sha256": "ac33cbb892ae7d5d73af446572b3a6fbe0855b84a337696049377c1ca51768ae"
+  },
+  {
+    "workspace_path": "local-maven/me/shedaniel/RoughlyEnoughItems-forge/12.1.785/RoughlyEnoughItems-forge-12.1.785.jar",
+    "bytes": 2404947,
+    "sha256": "e11dfad0ad63e2bd740ba1f88846d311dda93c7a9dcbbd0a2b2250f9dca96aa1"
+  }
+]

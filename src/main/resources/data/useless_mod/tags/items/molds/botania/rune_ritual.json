@@ -1,0 +1,6 @@
+{
+  "replace": false,
+  "values": [
+    { "id": "mythicbotany:central_rune_holder", "required": false }
+  ]
+}

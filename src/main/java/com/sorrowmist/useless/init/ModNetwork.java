@@ -1,0 +1,124 @@
+package com.sorrowmist.useless.init;
+
+import com.sorrowmist.useless.UselessMod;
+import com.sorrowmist.uselesscore.api.network.CoreNetworkChannel;
+import net.minecraft.resources.ResourceLocation;
+import com.sorrowmist.useless.network.AECancelPacket;
+import com.sorrowmist.useless.network.AEReturnOutputTogglePacket;
+import com.sorrowmist.useless.network.AETaskProgressPacket;
+import com.sorrowmist.useless.network.AETaskProgressRequestPacket;
+import com.sorrowmist.useless.network.AeLinkPreviewPacket;
+import com.sorrowmist.useless.network.AlloyFurnaceErrorHighlightPacket;
+import com.sorrowmist.useless.network.AeLinkPreviewRequestPacket;
+import com.sorrowmist.useless.network.AutoIOChangePacket;
+import com.sorrowmist.useless.network.BeefInvulnerabilitySyncPacket;
+import com.sorrowmist.useless.network.BeefInvulnerabilityStatePacket;
+import com.sorrowmist.useless.network.BeefToolLayoutRequestPacket;
+import com.sorrowmist.useless.network.BeefToolLayoutResultPacket;
+import com.sorrowmist.useless.network.BeefToolLayoutSyncPacket;
+import com.sorrowmist.useless.network.BeefToolLayoutUpdatePacket;
+import com.sorrowmist.useless.network.EnchantmentSwitchPacket;
+import com.sorrowmist.useless.network.FaceModeChangePacket;
+import com.sorrowmist.useless.network.ForceBreakKeyPacket;
+import com.sorrowmist.useless.network.MiningDataSyncPacket;
+import com.sorrowmist.useless.network.ModeTogglePacket;
+import com.sorrowmist.useless.network.MultiblockAlloyFurnaceEnergyLimitPacket;
+import com.sorrowmist.useless.network.PatternPageChangePacket;
+import com.sorrowmist.useless.network.ThermostatSetPacket;
+import com.sorrowmist.useless.network.ProtectEntityPacket;
+import com.sorrowmist.useless.network.PassiveCraftingSettingsPacket;
+import com.sorrowmist.useless.network.PassiveCraftingSlotMultiplierPacket;
+import com.sorrowmist.useless.network.PassiveCraftingStatusPacket;
+import com.sorrowmist.useless.network.OreGeneratorOutputTogglePacket;
+import com.sorrowmist.useless.network.OreGeneratorSettingsPacket;
+import com.sorrowmist.useless.network.RitualSatchelPlacePacket;
+import com.sorrowmist.useless.network.RedstoneControlPacket;
+import com.sorrowmist.useless.network.SelectOmniversalPatternRecipePacket;
+import com.sorrowmist.useless.network.ShapeSwitchPacket;
+import com.sorrowmist.useless.network.TabKeyPressedPacket;
+import com.sorrowmist.useless.network.TeleportKeyPacket;
+import com.sorrowmist.useless.network.TankClearPacket;
+import com.sorrowmist.useless.network.ToolTypeModeSwitchPacket;
+import com.sorrowmist.useless.network.ConstructionWandCorePacket;
+import com.sorrowmist.useless.network.ConstructionWandPreviewPacket;
+import com.sorrowmist.useless.network.ConstructionWandPreviewRequestPacket;
+import com.sorrowmist.useless.network.DimensionConfigGhostSlotPacket;
+import com.sorrowmist.useless.network.DimensionConfigSubmitPacket;
+import com.sorrowmist.useless.network.StaffLinkBindPacket;
+import com.sorrowmist.useless.network.StaffLinkConfigurePacket;
+import com.sorrowmist.useless.network.StaffLinkCyclePacket;
+import com.sorrowmist.useless.network.StaffLinkDetachPacket;
+import com.sorrowmist.useless.network.StaffLinkHighlightPacket;
+import com.sorrowmist.useless.network.StaffLinkHighlightRequestPacket;
+import com.sorrowmist.useless.network.StaffLinkNetworkPacket;
+import com.sorrowmist.useless.network.StaffLinkOpenPacket;
+import com.sorrowmist.useless.network.StaffLinkRenamePacket;
+import com.sorrowmist.useless.network.StaffLinkReorderPacket;
+import com.sorrowmist.useless.network.StaffLinkSyncPacket;
+import com.sorrowmist.useless.network.StaffLinkStressStatusPacket;
+
+public class ModNetwork {
+    public static final CoreNetworkChannel CHANNEL = new CoreNetworkChannel(new ResourceLocation(UselessMod.MODID, "network"));
+
+    public static void registerPackets() {
+        CHANNEL.registerToServer(BeefToolLayoutRequestPacket.class, BeefToolLayoutRequestPacket.STREAM_CODEC, BeefToolLayoutRequestPacket::handle);
+        CHANNEL.registerToClient(BeefToolLayoutSyncPacket.class, BeefToolLayoutSyncPacket.STREAM_CODEC, BeefToolLayoutSyncPacket::handle);
+        CHANNEL.registerToServer(BeefToolLayoutUpdatePacket.class, BeefToolLayoutUpdatePacket.STREAM_CODEC, BeefToolLayoutUpdatePacket::handle);
+        CHANNEL.registerToClient(BeefToolLayoutResultPacket.class, BeefToolLayoutResultPacket.STREAM_CODEC, BeefToolLayoutResultPacket::handle);
+        CHANNEL.registerToServer(EnchantmentSwitchPacket.class, EnchantmentSwitchPacket.STREAM_CODEC, EnchantmentSwitchPacket::handle);
+        CHANNEL.registerToServer(ToolTypeModeSwitchPacket.class, ToolTypeModeSwitchPacket.STREAM_CODEC, ToolTypeModeSwitchPacket::handle);
+        CHANNEL.registerToServer(ConstructionWandCorePacket.class, ConstructionWandCorePacket.STREAM_CODEC, ConstructionWandCorePacket::handle);
+        CHANNEL.registerToServer(AeLinkPreviewRequestPacket.class, AeLinkPreviewRequestPacket.STREAM_CODEC, AeLinkPreviewRequestPacket::handle);
+        CHANNEL.registerToClient(AeLinkPreviewPacket.class, AeLinkPreviewPacket.STREAM_CODEC, AeLinkPreviewPacket::handle);
+        CHANNEL.registerToServer(ConstructionWandPreviewRequestPacket.class, ConstructionWandPreviewRequestPacket.STREAM_CODEC, ConstructionWandPreviewRequestPacket::handle);
+        CHANNEL.registerToClient(ConstructionWandPreviewPacket.class, ConstructionWandPreviewPacket.STREAM_CODEC, ConstructionWandPreviewPacket::handle);
+        CHANNEL.registerToServer(TabKeyPressedPacket.class, TabKeyPressedPacket.STREAM_CODEC, TabKeyPressedPacket::handle);
+        CHANNEL.registerToServer(TeleportKeyPacket.class, TeleportKeyPacket.STREAM_CODEC, TeleportKeyPacket::handle);
+        CHANNEL.registerToServer(ModeTogglePacket.class, ModeTogglePacket.STREAM_CODEC, ModeTogglePacket::handle);
+        CHANNEL.registerToServer(ProtectEntityPacket.class, ProtectEntityPacket.STREAM_CODEC, ProtectEntityPacket::handle);
+        CHANNEL.registerToServer(ShapeSwitchPacket.class, ShapeSwitchPacket.STREAM_CODEC, ShapeSwitchPacket::handle);
+        CHANNEL.registerToServer(ForceBreakKeyPacket.class, ForceBreakKeyPacket.STREAM_CODEC, ForceBreakKeyPacket::handle);
+        CHANNEL.registerToServer(TankClearPacket.class, TankClearPacket.STREAM_CODEC, TankClearPacket::handle);
+        CHANNEL.registerToClient(MiningDataSyncPacket.class, MiningDataSyncPacket.STREAM_CODEC, MiningDataSyncPacket::handle);
+        CHANNEL.registerToClient(AETaskProgressPacket.class, AETaskProgressPacket.STREAM_CODEC, AETaskProgressPacket::handle);
+        CHANNEL.registerToServer(AETaskProgressRequestPacket.class, AETaskProgressRequestPacket.STREAM_CODEC, AETaskProgressRequestPacket::handle);
+        CHANNEL.registerToClient(BeefInvulnerabilitySyncPacket.class, BeefInvulnerabilitySyncPacket.STREAM_CODEC, BeefInvulnerabilitySyncPacket::handle);
+        CHANNEL.registerToClient(BeefInvulnerabilityStatePacket.class, BeefInvulnerabilityStatePacket.STREAM_CODEC, BeefInvulnerabilityStatePacket::handle);
+        CHANNEL.registerToServer(PatternPageChangePacket.class, PatternPageChangePacket.STREAM_CODEC, PatternPageChangePacket::handle);
+        CHANNEL.registerToServer(FaceModeChangePacket.class, FaceModeChangePacket.STREAM_CODEC, FaceModeChangePacket::handle);
+        CHANNEL.registerToServer(AutoIOChangePacket.class, AutoIOChangePacket.STREAM_CODEC, AutoIOChangePacket::handle);
+        CHANNEL.registerToServer(RedstoneControlPacket.class, RedstoneControlPacket.STREAM_CODEC, RedstoneControlPacket::handle);
+        CHANNEL.registerToServer(AECancelPacket.class, AECancelPacket.STREAM_CODEC, AECancelPacket::handle);
+        CHANNEL.registerToServer(AEReturnOutputTogglePacket.class, AEReturnOutputTogglePacket.STREAM_CODEC, AEReturnOutputTogglePacket::handle);
+        CHANNEL.registerToServer(SelectOmniversalPatternRecipePacket.class, SelectOmniversalPatternRecipePacket.STREAM_CODEC, SelectOmniversalPatternRecipePacket::handle);
+        CHANNEL.registerToServer(PassiveCraftingSettingsPacket.class, PassiveCraftingSettingsPacket.STREAM_CODEC, PassiveCraftingSettingsPacket::handle);
+        CHANNEL.registerToServer(PassiveCraftingSlotMultiplierPacket.class, PassiveCraftingSlotMultiplierPacket.STREAM_CODEC, PassiveCraftingSlotMultiplierPacket::handle);
+        CHANNEL.registerToServer(MultiblockAlloyFurnaceEnergyLimitPacket.class, MultiblockAlloyFurnaceEnergyLimitPacket.STREAM_CODEC, MultiblockAlloyFurnaceEnergyLimitPacket::handle);
+        CHANNEL.registerToClient(PassiveCraftingStatusPacket.class, PassiveCraftingStatusPacket.STREAM_CODEC, PassiveCraftingStatusPacket::handle);
+        CHANNEL.registerToServer(OreGeneratorSettingsPacket.class, OreGeneratorSettingsPacket.STREAM_CODEC, OreGeneratorSettingsPacket::handle);
+        CHANNEL.registerToServer(OreGeneratorOutputTogglePacket.class, OreGeneratorOutputTogglePacket.STREAM_CODEC, OreGeneratorOutputTogglePacket::handle);
+        CHANNEL.registerToServer(DimensionConfigGhostSlotPacket.class, DimensionConfigGhostSlotPacket.STREAM_CODEC, DimensionConfigGhostSlotPacket::handle);
+        CHANNEL.registerToServer(DimensionConfigSubmitPacket.class, DimensionConfigSubmitPacket.STREAM_CODEC, DimensionConfigSubmitPacket::handle);
+        CHANNEL.registerToServer(RitualSatchelPlacePacket.class, RitualSatchelPlacePacket.STREAM_CODEC, RitualSatchelPlacePacket::handle);
+        CHANNEL.registerToServer(StaffLinkOpenPacket.class, StaffLinkOpenPacket.STREAM_CODEC, StaffLinkOpenPacket::handle);
+        CHANNEL.registerToServer(StaffLinkBindPacket.class, StaffLinkBindPacket.STREAM_CODEC, StaffLinkBindPacket::handle);
+        CHANNEL.registerToServer(StaffLinkDetachPacket.class, StaffLinkDetachPacket.STREAM_CODEC, StaffLinkDetachPacket::handle);
+        CHANNEL.registerToServer(StaffLinkReorderPacket.class, StaffLinkReorderPacket.STREAM_CODEC, StaffLinkReorderPacket::handle);
+        CHANNEL.registerToServer(StaffLinkConfigurePacket.class, StaffLinkConfigurePacket.STREAM_CODEC, StaffLinkConfigurePacket::handle);
+        CHANNEL.registerToServer(StaffLinkRenamePacket.class, StaffLinkRenamePacket.STREAM_CODEC, StaffLinkRenamePacket::handle);
+        CHANNEL.registerToServer(StaffLinkCyclePacket.class, StaffLinkCyclePacket.STREAM_CODEC, StaffLinkCyclePacket::handle);
+        CHANNEL.registerToServer(StaffLinkNetworkPacket.class, StaffLinkNetworkPacket.STREAM_CODEC, StaffLinkNetworkPacket::handle);
+        CHANNEL.registerToClient(StaffLinkSyncPacket.class, StaffLinkSyncPacket.STREAM_CODEC, StaffLinkSyncPacket::handle);
+        CHANNEL.registerToServer(StaffLinkHighlightRequestPacket.class, StaffLinkHighlightRequestPacket.STREAM_CODEC, StaffLinkHighlightRequestPacket::handle);
+        CHANNEL.registerToClient(StaffLinkHighlightPacket.class, StaffLinkHighlightPacket.STREAM_CODEC, StaffLinkHighlightPacket::handle);
+        CHANNEL.registerToClient(StaffLinkStressStatusPacket.class, StaffLinkStressStatusPacket.STREAM_CODEC, StaffLinkStressStatusPacket::handle);
+        CHANNEL.registerToClient(AlloyFurnaceErrorHighlightPacket.class, AlloyFurnaceErrorHighlightPacket.STREAM_CODEC, AlloyFurnaceErrorHighlightPacket::handle);
+        CHANNEL.registerToServer(ThermostatSetPacket.class, ThermostatSetPacket.STREAM_CODEC, ThermostatSetPacket::handle);
+        CHANNEL.registerToServer(com.sorrowmist.useless.network.EncodeConstructionPatternPacket.class,
+                com.sorrowmist.useless.network.EncodeConstructionPatternPacket.STREAM_CODEC,
+                com.sorrowmist.useless.network.EncodeConstructionPatternPacket::handle);
+        CHANNEL.registerToServer(com.sorrowmist.useless.network.EncodeOmniversalPatternPacket.class,
+                com.sorrowmist.useless.network.EncodeOmniversalPatternPacket.STREAM_CODEC,
+                com.sorrowmist.useless.network.EncodeOmniversalPatternPacket::handle);
+    }
+}

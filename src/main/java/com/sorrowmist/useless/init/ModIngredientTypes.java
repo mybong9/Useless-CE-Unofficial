@@ -1,0 +1,58 @@
+package com.sorrowmist.useless.init;
+
+import com.sorrowmist.useless.UselessMod;
+import com.sorrowmist.useless.content.recipe.RecipeSourceIds;
+import com.sorrowmist.useless.content.recipe.adapters.apotheosis.ApotheosisGemIngredient;
+import com.sorrowmist.useless.content.recipe.adapters.enderio.SoulVialSetIngredient;
+import com.sorrowmist.useless.content.recipe.adapters.hostilenetworks.DataModelRangeIngredient;
+import net.minecraftforge.fml.ModList;
+import com.sorrowmist.uselesscore.api.recipe.CoreIngredientType;
+import net.minecraftforge.registries.RegistryObject;
+import net.minecraftforge.registries.DeferredRegister;
+import com.sorrowmist.uselesscore.api.recipe.CoreIngredientRegistry;
+import org.jetbrains.annotations.Nullable;
+
+/** NeoForge custom ingredient types used by generated compatibility recipes. */
+public final class ModIngredientTypes {
+    public static final CoreIngredientRegistry INGREDIENT_TYPES = new CoreIngredientRegistry(UselessMod.MODID);
+
+    public static final java.util.function.Supplier<CoreIngredientType<SoulVialSetIngredient>>
+            SOUL_VIAL_SET = INGREDIENT_TYPES.register("soul_vial_set", () -> SoulVialSetIngredient.TYPE);
+
+    /**
+     * 按数据区间匹配 HNN 数据模型的原料。
+     *
+     * <p>{@code DataModelRangeIngredient} 的类层级引用了 Placebo 的 {@code DynamicHolder}，
+     * 而 Placebo 只随 Hostile Neural Networks 一起出现。若在 HNN 缺席时仍然注册这个类型，
+     * {@code DeferredRegister} 的 supplier 会在 RegisterEvent 派发时加载该类并抛出
+     * {@code NoClassDefFoundError: dev/shadowsoffire/placebo/codec/CodecProvider}，
+     * 整个 RegisterEvent 派发随之失败，NeoForge 把本模组标记为 broken mod state 并崩溃。
+     *
+     * <p>因此注册本身也必须放在加载检查之后：HNN 缺席时该字段为 {@code null}，
+     * supplier 不会被创建，HNN 与 Placebo 的类不会被解析。
+     * 使用方见 {@code DataModelRangeIngredient#getType()}。
+     */
+    @Nullable
+    public static final java.util.function.Supplier<CoreIngredientType<DataModelRangeIngredient>>
+            DATA_MODEL_RANGE = ModList.get().isLoaded(RecipeSourceIds.HOSTILE_NETWORKS)
+                    ? INGREDIENT_TYPES.register("data_model_range", () -> DataModelRangeIngredient.TYPE)
+                    : null;
+
+    /**
+     * 匹配任意神化宝石的原料。
+     *
+     * <p>与 {@code DATA_MODEL_RANGE} 同理：{@code ApotheosisGemIngredient} 的类层级引用了
+     * 神化的 {@code GemItem} 与 {@code GemRegistry}。神化缺席时注册该类型会在 RegisterEvent
+     * 派发阶段抛出 {@code NoClassDefFoundError}，导致本模组进入 broken mod state，
+     * 因此仅在神化存在时创建 supplier，缺席时该字段为 {@code null}。
+     * 使用方见 {@code ApotheosisGemIngredient#getType()}。
+     */
+    @Nullable
+    public static final java.util.function.Supplier<CoreIngredientType<ApotheosisGemIngredient>>
+            APOTHEOSIS_GEM = ModList.get().isLoaded(RecipeSourceIds.APOTHEOSIS)
+                    ? INGREDIENT_TYPES.register("apotheosis_gem", () -> ApotheosisGemIngredient.TYPE)
+                    : null;
+
+    private ModIngredientTypes() {
+    }
+}

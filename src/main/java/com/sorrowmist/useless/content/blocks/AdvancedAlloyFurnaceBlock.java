@@ -1,0 +1,490 @@
+package com.sorrowmist.useless.content.blocks;
+
+
+import com.sorrowmist.uselesscore.api.component.CoreItemComponents;
+import com.sorrowmist.uselesscore.api.component.CoreItemStackData;
+import appeng.items.tools.quartz.QuartzCuttingKnifeItem;
+import appeng.menu.MenuOpener;
+import appeng.menu.locator.MenuLocators;
+import appeng.util.InteractionUtil;
+
+import com.sorrowmist.uselesscore.api.enums.FurnaceFace;
+import com.sorrowmist.uselesscore.api.enums.FurnaceFaceMode;
+import com.sorrowmist.uselesscore.api.enums.RedstoneControlMode;
+import com.sorrowmist.useless.content.blockentities.AdvancedAlloyFurnaceBlockEntity;
+import com.sorrowmist.useless.content.blockentities.AdvancedAlloyFurnaceData;
+import com.sorrowmist.useless.content.machines.advanced_alloy_furnace.layout.AdvancedAlloyFurnaceLayout;
+import com.sorrowmist.uselesscore.api.component.FurnaceDataComponent;
+import com.sorrowmist.uselesscore.api.component.ExternalInventoryKind;
+import com.sorrowmist.uselesscore.api.component.ExternalInventoryReference;
+import com.sorrowmist.uselesscore.api.component.UselessComponents;
+import com.sorrowmist.useless.core.constants.NBTConstants;
+import com.sorrowmist.useless.init.ModMenuType;
+import com.sorrowmist.useless.world.inventory.ExternalInventoryStore;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraft.world.phys.BlockHitResult;
+import com.sorrowmist.uselesscore.api.capability.CoreCapabilities;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.capability.IFluidHandler;
+import net.minecraftforge.items.IItemHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+public class AdvancedAlloyFurnaceBlock extends Block implements EntityBlock {
+
+    private static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    private static final BooleanProperty ACTIVE = BooleanProperty.create("active");
+
+    /**
+     * 获取活跃状态属性（用于方块实体更新光照）
+     *
+     * @return 活跃状态属性
+     */
+    public static BooleanProperty getActiveProperty() {
+        return ACTIVE;
+    }
+
+    public AdvancedAlloyFurnaceBlock() {
+        super(BlockBehaviour.Properties.of()
+                .noOcclusion()
+                .strength(5.0F, 32768.0F)
+                .requiresCorrectToolForDrops()
+                .lightLevel(state -> state.getValue(ACTIVE) ? 15 : 7));
+
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(ACTIVE, false));
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING, ACTIVE);
+    }
+
+    /**
+     * 方块被移除时的处理
+     * <p>
+     * 掉落方块实体中的所有物品
+     *
+     * @param state    当前状态
+     * @param level    世界
+     * @param pos      位置
+     * @param newState 新状态
+     * @param isMoving 是否在移动
+     */
+    @Override
+    public void onRemove(BlockState state, @NotNull Level level, @NotNull BlockPos pos, BlockState newState,
+                         boolean isMoving) {
+        if (!state.is(newState.getBlock())) {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+                if (!level.isClientSide) {
+                    furnace.saveExternalInventory();
+                }
+                // 掉落物品（不包括容器内的物品，它们会保存在方块物品中）
+                // 注意：使用精准采集时，物品会通过 getDrops 保存到方块物品中
+                // AE 任务数据不随掉落物保存，必须在此返还材料：
+                // onRemove 先于 setRemoved 执行，此时 AE 节点仍然存活，材料能真正写回网络
+                if (!level.isClientSide && !furnace.isDropDataCaptured()) {
+                    furnace.cancelAllAETasks();
+                }
+                if (!level.isClientSide) {
+                    furnace.releaseExternalInventory();
+                }
+            }
+        }
+        super.onRemove(state, level, pos, newState, isMoving);
+    }
+
+    /**
+     * 获取方块掉落物
+     * <p>
+     * 将方块实体数据保存到物品的Data Component中
+     * 如果熔炉全空（无物品、无能量、无流体、无模具、无进度、阶级为0），则不保存tag
+     */
+    @Override
+    public @NotNull List<ItemStack> getDrops(@NotNull BlockState state, LootParams.@NotNull Builder params) {
+        List<ItemStack> drops = super.getDrops(state, params);
+        
+        // 获取方块实体
+        BlockEntity blockEntity = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if (blockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+            // 为每个掉落物添加方块实体数据
+            furnace.getExternalInventoryReference();
+            furnace.saveExternalInventory();
+            for (ItemStack drop : drops) {
+                if (drop.is(this.asItem())) {
+                    Component customName = furnace.getCustomName();
+                    if (customName != null) {
+                        CoreItemStackData.setCustomName(drop, customName);
+                    }
+
+                    // 检查是否全空
+                    boolean isEmpty = isFurnaceEmpty(furnace);
+                    
+                    // 如果全空且不高于0阶，不保存任何数据
+                    if (isEmpty && furnace.getFurnaceTier() <= 0 && !furnace.hasPersistedAETaskData()) {
+                        continue;
+                    }
+                    
+                    CompoundTag blockEntityData = new CompoundTag();
+                    // 保存所有数据到NBT
+                    blockEntityData.putInt(NBTConstants.FURNACE_TIER, furnace.getFurnaceTier());
+                    
+                    // 保存能量
+                    blockEntityData.putLong(NBTConstants.ENERGY, furnace.getEnergy());
+                    
+                    // 保存流体
+                    for (int i = 0; i < AdvancedAlloyFurnaceLayout.FLUID_TANK_COUNT; i++) {
+                        var inputTank = furnace.getInputFluidTank(i);
+                        if (!inputTank.getFluid().isEmpty()) {
+                            blockEntityData.put(NBTConstants.getInputFluidTag(i), 
+                                com.sorrowmist.uselesscore.api.fluid.CoreFluidStacks.save(inputTank.getFluid(), params.getLevel().registryAccess()));
+                        }
+                        var outputTank = furnace.getOutputFluidTank(i);
+                        if (!outputTank.getFluid().isEmpty()) {
+                            blockEntityData.put(NBTConstants.getOutputFluidTag(i), 
+                                com.sorrowmist.uselesscore.api.fluid.CoreFluidStacks.save(outputTank.getFluid(), params.getLevel().registryAccess()));
+                        }
+                    }
+                    furnace.getInputChemicalStorage().save(
+                            blockEntityData, "InputChemical", params.getLevel().registryAccess());
+                    furnace.getOutputChemicalStorage().save(
+                            blockEntityData, "OutputChemical", params.getLevel().registryAccess());
+
+                    CompoundTag aeTasksTag = new CompoundTag();
+                    furnace.saveAETasks(aeTasksTag, params.getLevel().registryAccess());
+                    blockEntityData.put("AeTasks", aeTasksTag);
+                    
+                    // 保存其他状态
+                    blockEntityData.putInt(NBTConstants.PROGRESS, furnace.getProgress());
+                    blockEntityData.putInt(NBTConstants.MAX_PROGRESS, furnace.getMaxProgress());
+                    blockEntityData.putInt(NBTConstants.CURRENT_PARALLEL,
+                            furnace.getData().get(AdvancedAlloyFurnaceData.DATA_CURRENT_PARALLEL));
+                    blockEntityData.putBoolean(NBTConstants.HAS_MOLD, furnace.hasMold());
+
+                    // 保存面模式
+                    FurnaceFaceMode[] faceModes = furnace.getFaceModes();
+                    blockEntityData.putInt("FaceModeTop", faceModes[FurnaceFace.TOP.ordinal()].ordinal());
+                    blockEntityData.putInt("FaceModeBottom", faceModes[FurnaceFace.BOTTOM.ordinal()].ordinal());
+                    blockEntityData.putInt("FaceModeFront", faceModes[FurnaceFace.FRONT.ordinal()].ordinal());
+                    blockEntityData.putInt("FaceModeBack", faceModes[FurnaceFace.BACK.ordinal()].ordinal());
+                    blockEntityData.putInt("FaceModeLeft", faceModes[FurnaceFace.LEFT.ordinal()].ordinal());
+                    blockEntityData.putInt("FaceModeRight", faceModes[FurnaceFace.RIGHT.ordinal()].ordinal());
+
+                    // 保存自动输入输出开关
+                    blockEntityData.putBoolean("AutoInputEnabled", furnace.isAutoInputEnabled());
+                    blockEntityData.putBoolean("AutoOutputEnabled", furnace.isAutoOutputEnabled());
+
+                    // 保存红石控制模式
+                    blockEntityData.putInt("RedstoneControlMode", furnace.getRedstoneControlMode().ordinal());
+
+                    ExternalInventoryReference inventoryReference = furnace.getExternalInventoryReference();
+                    if (inventoryReference != null) {
+                        CoreItemComponents.set(drop, UselessComponents.EXTERNAL_INVENTORY_REFERENCE.get(), inventoryReference);
+                    }
+                    
+                    // 使用Data Component存储数据
+                    FurnaceDataComponent component = new FurnaceDataComponent(
+                        furnace.getFurnaceTier(), 
+                        blockEntityData
+                    );
+                    CoreItemComponents.set(drop, UselessComponents.FURNACE_DATA.get(), component);
+                    furnace.markDropDataCaptured();
+                    break;
+                }
+            }
+        }
+        
+        return drops;
+    }
+    
+    /**
+     * 检查熔炉是否全空
+     * @param furnace 熔炉方块实体
+     * @return 如果无物品、无能量、无流体、无模具、无进度返回true
+     */
+    private static boolean isFurnaceEmpty(AdvancedAlloyFurnaceBlockEntity furnace) {
+        // 检查物品栏
+        IItemHandler itemHandler = furnace.getItemHandler();
+        if (itemHandler != null) {
+            for (int i = 0; i < itemHandler.getSlots(); i++) {
+                if (!itemHandler.getStackInSlot(i).isEmpty()) {
+                    return false;
+                }
+            }
+        }
+        
+        // 检查能量
+        if (furnace.getEnergy() > 0) {
+            return false;
+        }
+        
+        // 检查流体
+        for (int i = 0; i < AdvancedAlloyFurnaceLayout.FLUID_TANK_COUNT; i++) {
+            if (!furnace.getInputFluidTank(i).getFluid().isEmpty()) {
+                return false;
+            }
+            if (!furnace.getOutputFluidTank(i).getFluid().isEmpty()) {
+                return false;
+            }
+        }
+        
+        // 检查模具
+        if (furnace.hasChemicalSupport()) {
+            for (int i = 0; i < AdvancedAlloyFurnaceLayout.CHEMICAL_TANK_COUNT; i++) {
+                if (!furnace.getInputChemical(i).isEmpty() || !furnace.getOutputChemical(i).isEmpty()) {
+                    return false;
+                }
+            }
+        }
+
+        if (furnace.hasMold()) {
+            return false;
+        }
+        
+        // 检查进度
+        if (furnace.getProgress() > 0) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * 空手右键点击方块的处理
+     * <p>
+     * 打开方块 GUI
+     *
+     * @param state     方块状态
+     * @param level     世界
+     * @param pos       位置
+     * @param player    玩家
+     * @param hitResult 命中结果
+     * @return 交互结果
+     */
+    @Override
+    @SuppressWarnings("DataFlowIssue")
+    public @NotNull InteractionResult use(@NotNull BlockState state, Level level,
+                                          @NotNull BlockPos pos, @NotNull Player player,
+                                          @NotNull InteractionHand hand, @NotNull BlockHitResult hitResult) {
+        ItemStack stack = player.getItemInHand(hand);
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace
+                && !InteractionUtil.isInAlternateUseMode(player)
+                && stack.getItem() instanceof QuartzCuttingKnifeItem) {
+            if (!level.isClientSide) {
+                com.sorrowmist.useless.compat.ae.OptionalRenamer.open(player, furnace);
+            }
+            return InteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+        if (blockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+            if (isFluidContainer(stack)) {
+                IFluidHandler fluidHandler = CoreCapabilities.get(
+                        level, CoreCapabilities.FluidHandler.BLOCK, pos, null);
+                if (fluidHandler != null && FluidUtil.interactWithFluidHandler(player, hand, fluidHandler)) {
+                    return InteractionResult.CONSUME;
+                }
+            }
+            com.sorrowmist.uselesscore.api.network.CoreMenus.open(player, furnace, buffer -> buffer.writeBlockPos(pos));
+            return InteractionResult.CONSUME;
+        }
+        return InteractionResult.PASS;
+    }
+
+    /**
+     * 检查物品是否是流体容器
+     *
+     * @param stack 物品堆
+     * @return 如果是流体容器返回true
+     */
+    private static boolean isFluidContainer(ItemStack stack) {
+        if (stack.isEmpty()) return false;
+        return stack.getCapability(CoreCapabilities.FluidHandler.ITEM).isPresent()
+                || FluidUtil.getFluidContained(stack).isPresent();
+    }
+
+    @Override
+    public @Nullable MenuProvider getMenuProvider(@NotNull BlockState state, Level level, @NotNull BlockPos pos) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        return blockEntity instanceof MenuProvider ? (MenuProvider) blockEntity : null;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
+        return new AdvancedAlloyFurnaceBlockEntity(pos, state);
+    }
+
+    @Nullable
+    @Override
+    public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level,
+                                                                  @NotNull BlockState state,
+                                                                  @NotNull BlockEntityType<T> type) {
+        return level.isClientSide ? null : (lvl, pos, st, be) -> {
+            if (be instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+                AdvancedAlloyFurnaceBlockEntity.tick(lvl, furnace);
+            }
+        };
+    }
+
+    /**
+     * 方块被放置时的处理
+     * <p>
+     * 从物品的Data Component中恢复方块实体数据
+     */
+    @Override
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state, 
+                            @Nullable net.minecraft.world.entity.LivingEntity placer, @NotNull ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        
+        if (level.isClientSide) return;
+
+        BlockEntity placedBlockEntity = level.getBlockEntity(pos);
+        if (placedBlockEntity instanceof AdvancedAlloyFurnaceBlockEntity placedFurnace) {
+            Component customName = CoreItemStackData.getCustomName(stack);
+            if (customName != null) {
+                placedFurnace.setName(customName.getString());
+            }
+        }
+        
+        // 从Data Component中恢复数据
+        FurnaceDataComponent component = CoreItemComponents.get(stack, UselessComponents.FURNACE_DATA.get());
+        ExternalInventoryReference requestedReference = CoreItemComponents.get(stack, UselessComponents.EXTERNAL_INVENTORY_REFERENCE.get());
+        if (component != null) {
+            CompoundTag blockEntityData = component.data();
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            
+            if (blockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+                // 恢复阶级（这会触发容量更新）
+                int tier = component.tier();
+                if (tier > 0) {
+                    furnace.tryUpgrade(tier);
+                }
+                
+                furnace.bindPlacedExternalInventory(
+                        requestedReference,
+                        blockEntityData.contains(NBTConstants.INVENTORY)
+                                ? blockEntityData.getCompound(NBTConstants.INVENTORY) : null,
+                        level.registryAccess());
+                
+                // 恢复能量
+                if (blockEntityData.contains(NBTConstants.ENERGY)) {
+                    furnace.setEnergy(blockEntityData.getLong(NBTConstants.ENERGY));
+                }
+                
+                // 恢复流体
+                for (int i = 0; i < AdvancedAlloyFurnaceLayout.FLUID_TANK_COUNT; i++) {
+                    String inputTag = NBTConstants.getInputFluidTag(i);
+                    if (blockEntityData.contains(inputTag)) {
+                        FluidStack fluid = com.sorrowmist.uselesscore.api.fluid.CoreFluidStacks.parseOptional(
+                            level.registryAccess(), blockEntityData.getCompound(inputTag));
+                        if (!fluid.isEmpty()) {
+                            furnace.getInputFluidTank(i).setFluid(fluid);
+                        }
+                    }
+                    
+                    String outputTag = NBTConstants.getOutputFluidTag(i);
+                    if (blockEntityData.contains(outputTag)) {
+                        FluidStack fluid = com.sorrowmist.uselesscore.api.fluid.CoreFluidStacks.parseOptional(
+                            level.registryAccess(), blockEntityData.getCompound(outputTag));
+                        if (!fluid.isEmpty()) {
+                            furnace.getOutputFluidTank(i).setFluid(fluid);
+                        }
+                    }
+                }
+                
+                // 恢复其他状态
+                furnace.getInputChemicalStorage().load(
+                        blockEntityData, "InputChemical", level.registryAccess());
+                furnace.getOutputChemicalStorage().load(
+                        blockEntityData, "OutputChemical", level.registryAccess());
+                furnace.readAETasks(blockEntityData);
+
+                if (blockEntityData.contains(NBTConstants.PROGRESS)) {
+                    furnace.setProgress(blockEntityData.getInt(NBTConstants.PROGRESS));
+                }
+                if (blockEntityData.contains(NBTConstants.MAX_PROGRESS)) {
+                    furnace.setMaxProgress(blockEntityData.getInt(NBTConstants.MAX_PROGRESS));
+                }
+                if (blockEntityData.contains(NBTConstants.HAS_MOLD)) {
+                    furnace.setHasMold(blockEntityData.getBoolean(NBTConstants.HAS_MOLD));
+                }
+
+                // 恢复面模式
+                if (blockEntityData.contains("FaceModeTop")) {
+                    furnace.setFaceMode(FurnaceFace.TOP, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeTop")));
+                }
+                if (blockEntityData.contains("FaceModeBottom")) {
+                    furnace.setFaceMode(FurnaceFace.BOTTOM, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeBottom")));
+                }
+                if (blockEntityData.contains("FaceModeFront")) {
+                    furnace.setFaceMode(FurnaceFace.FRONT, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeFront")));
+                }
+                if (blockEntityData.contains("FaceModeBack")) {
+                    furnace.setFaceMode(FurnaceFace.BACK, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeBack")));
+                }
+                if (blockEntityData.contains("FaceModeLeft")) {
+                    furnace.setFaceMode(FurnaceFace.LEFT, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeLeft")));
+                }
+                if (blockEntityData.contains("FaceModeRight")) {
+                    furnace.setFaceMode(FurnaceFace.RIGHT, FurnaceFaceMode.byIndex(blockEntityData.getInt("FaceModeRight")));
+                }
+
+                // 恢复自动输入输出开关
+                if (blockEntityData.contains("AutoInputEnabled")) {
+                    furnace.setAutoInputEnabled(blockEntityData.getBoolean("AutoInputEnabled"));
+                }
+                if (blockEntityData.contains("AutoOutputEnabled")) {
+                    furnace.setAutoOutputEnabled(blockEntityData.getBoolean("AutoOutputEnabled"));
+                }
+
+                // 恢复红石控制模式
+                if (blockEntityData.contains("RedstoneControlMode")) {
+                    furnace.setRedstoneControlMode(RedstoneControlMode.byIndex(blockEntityData.getInt("RedstoneControlMode")));
+                }
+
+                furnace.setChanged();
+            }
+        } else if (placedBlockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+            furnace.bindPlacedExternalInventory(requestedReference, null, level.registryAccess());
+        }
+        if (placedBlockEntity instanceof AdvancedAlloyFurnaceBlockEntity furnace) {
+            ExternalInventoryStore.clearLegacyComponent(furnace, ExternalInventoryKind.FURNACE);
+        }
+    }
+}

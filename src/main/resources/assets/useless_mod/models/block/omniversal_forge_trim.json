@@ -1,0 +1,8 @@
+{
+  "parent":"minecraft:block/slab",
+  "textures":{
+    "bottom":"useless_mod:block/multiblock_alloy_furnace/omniversal_forge_trim",
+    "top":"useless_mod:block/multiblock_alloy_furnace/omniversal_forge_trim",
+    "side":"useless_mod:block/multiblock_alloy_furnace/omniversal_forge_trim"
+  }
+}

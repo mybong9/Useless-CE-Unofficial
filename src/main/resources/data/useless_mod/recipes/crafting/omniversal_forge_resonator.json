@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "pattern": [
+    " Q ",
+    "QFQ",
+    " Q "
+  ],
+  "key": {
+    "Q": {
+      "item": "minecraft:quartz"
+    },
+    "F": {
+      "item": "ae2:fluix_crystal"
+    }
+  },
+  "result": {
+    "item": "useless_mod:omniversal_forge_resonator",
+    "count": 4
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "replace": false,
+  "values": [
+    {
+      "id": "botania:alfheim_portal",
+      "required": false
+    },
+    {
+      "id": "botanicalmachinery:alfheim_market",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:base_alfheim_market",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:upgraded_alfheim_market",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:advanced_alfheim_market",
+      "required": false
+    },
+    {
+      "id": "botanicalextramachinery:ultimate_alfheim_market",
+      "required": false
+    }
+  ]
+}
