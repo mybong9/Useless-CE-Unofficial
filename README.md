@@ -62,3 +62,11 @@ Third-party resource licenses remain attached to their respective assets.
 
 Source code, resources and build scripts are included. Game saves, runtime folders,
 crash reports, local configuration, caches, credentials and third-party dependency JARs are excluded.
+
+<!-- project-license:start -->
+## 许可证 / License
+
+本非官方版本新增及移植修改部分采用 [MIT License](LICENSE)，版权署名为 **Copyright (c) 2026 mybong9**。
+上游原代码的完整 MIT 许可证及原版权声明保留在 [licenses/UPSTREAM-MIT.txt](licenses/UPSTREAM-MIT.txt)。
+第三方代码、资源和依赖仍保留各自已有的许可证与版权声明；本项目的署名不替代原作者的版权。
+<!-- project-license:end -->
