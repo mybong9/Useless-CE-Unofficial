@@ -37,7 +37,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **
 | AdvancedAE | `advancedae` | 1.0.0 或更高；`[1.0.0,)` | 客户端、服务端 |
 | ExtendedAE | `expatternprovider` | 1.0.0 或更高；`[1.0.0,)` | 客户端、服务端 |
 | NuclearCraft | `nuclearcraft` | 未限定最低版本；`[0,)` | 客户端、服务端 |
-| Botanical Machinery Extra Reforked | `bmaddon` | 未限定最低版本；`[0,)` | 客户端、服务端 |
+| Blood Magic Additions（血魔法附加） | `bmaddon` | 未限定最低版本；`[0,)` | 客户端、服务端 |
 | NeoECOAEExtension | `neoecoae` | 20.5.1 或更高；`[20.5.1,)` | 客户端、服务端 |
 
 可选联动不要求安装；安装时须符合上表版本范围，并安装该联动模组自身要求的前置。未声明最低版本的其他动态联动不在此处编造版本下限。
