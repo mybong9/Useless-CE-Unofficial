@@ -1,6 +1,5 @@
 package com.sorrowmist.useless.compat.gtceu;
 
-import com.google.gson.JsonObject;
 import com.sorrowmist.useless.UselessMod;
 import com.sorrowmist.useless.content.blockentities.multiblock.MultiblockAlloyFurnaceCoreBlockEntity;
 import com.sorrowmist.useless.content.machines.advanced_alloy_furnace.ae.CraftingTaskContext;
@@ -28,7 +27,7 @@ import static com.sorrowmist.useless.compat.gtceu.GregTechParts.isA;
 /** Runtime requirements use live GT hatches and the furnace's actual world; no research bypass. */
 public final class GregTechEnvironment {
     private static final String STATUS = "gui.useless_mod.advanced_alloy_furnace.ae_task_status.waiting_conditions";
-    private static final Set<String> CONDITIONS = Set.of("ResearchCondition", "CleanroomCondition", "GravityCondition",
+    private static final Set<String> CONDITIONS = Set.of("ResearchCondition", "CleanroomCondition",
             "DimensionCondition", "BiomeCondition", "PositionYCondition", "DaytimeCondition", "RainingCondition",
             "ThunderCondition", "AdjacentBlockCondition", "AdjacentFluidCondition");
     private GregTechEnvironment() {}
@@ -50,7 +49,7 @@ public final class GregTechEnvironment {
         String path = converted.id().getPath();
         ResourceLocation id = new ResourceLocation(converted.id().getNamespace(), path.substring(0, path.length() - "_converted".length()));
         Recipe<?> source = level.getRecipeManager().byKey(id).orElse(null);
-        if (source == null || !source.getClass().getName().equals("com.gregtechceu.gtceu.api.recipe.GTRecipe"))
+        if (source == null || !isA(source, "com.gregtechceu.gtceu.api.recipe.GTRecipe"))
             return CraftingTaskContext.TaskAvailability.ready();
         if (!(level instanceof ServerLevel server) || !server.getServer().isSameThread()) return waiting("GTM: server environment required");
         try {
@@ -94,7 +93,6 @@ public final class GregTechEnvironment {
         return switch (condition.getClass().getSimpleName()) {
             case "ResearchCondition" -> research(recipe, parts);
             case "CleanroomCondition" -> cleanroom(condition, level, pos, parts);
-            case "GravityCondition" -> gravity(condition, level, pos, parts);
             case "DimensionCondition" -> level.dimension().location().equals(call(condition, "getDimension"));
             case "BiomeCondition" -> level.getBiome(pos).is((ResourceKey) call(condition, "getBiome"));
             case "PositionYCondition" -> pos.getY() >= ((Number) call(condition, "getMin")).intValue()
@@ -111,7 +109,7 @@ public final class GregTechEnvironment {
     private static boolean research(Recipe<?> recipe, List<Object> parts) throws ReflectiveOperationException {
         Class<?> api = Class.forName("com.gregtechceu.gtceu.api.capability.IDataAccessHatch");
         // Call exactly the API used by GT assembly lines. Each optical traversal has its own visited set.
-        var check = api.getMethod("isRecipeAvailable", recipe.getClass(), Collection.class);
+        var check = api.getMethod("isRecipeAvailable", Class.forName("com.gregtechceu.gtceu.api.recipe.GTRecipe"), Collection.class);
         for (Object part : parts) if (api.isInstance(part)
                 && Boolean.TRUE.equals(check.invoke(part, recipe, new HashSet<>()))) return true;
         return false;
@@ -155,24 +153,6 @@ public final class GregTechEnvironment {
         Class<?> api = Class.forName("com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider");
         return Boolean.TRUE.equals(api.getMethod("isClean").invoke(provider))
                 && ((Set<?>) api.getMethod("getTypes").invoke(provider)).contains(required);
-    }
-
-    private static boolean gravity(Object condition, Level level, BlockPos pos, List<Object> parts) throws ReflectiveOperationException {
-        JsonObject data = (JsonObject) call(condition, "serialize");
-        boolean zero = data.get("gravity").getAsBoolean();
-        for (Object part : parts) if (isA(part, "org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance.IGravityPartMachine")
-                && ((Number) call(part, "getCurrentGravity")).intValue() == (zero ? 0 : 100)) return true;
-        String dimension = level.dimension().location().toString();
-        if (zero && dimension.contains("_orbit")) return true;
-        // GTL's skyblock rule is configurable; read its real setting rather than assuming an altitude.
-        try {
-            Object options = Class.forName("org.gtlcore.gtlcore.config.ConfigHolder").getField("INSTANCE").get(null);
-            Object content = options.getClass().getField("content").get(options);
-            if (!zero || !content.getClass().getField("enableSkyBlokeMode").getBoolean(content)) return false;
-            int threshold = data.get("height_threshold").getAsInt();
-            return dimension.equals("minecraft:overworld") && pos.getY() >= threshold
-                    || Set.of("kubejs:void", "kubejs:flat").contains(dimension) && pos.getY() >= 505;
-        } catch (ClassNotFoundException noGTL) { return false; }
     }
 
     @SuppressWarnings("unchecked")

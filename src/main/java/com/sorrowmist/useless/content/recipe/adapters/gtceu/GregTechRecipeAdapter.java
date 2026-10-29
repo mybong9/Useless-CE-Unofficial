@@ -34,18 +34,22 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         if (previous != null && previous.generation == generation) return previous.recipes;
         List<CoreRecipeHolder<GregTechSyntheticRecipe>> result = new ArrayList<>();
         int skipped = 0;
+        Map<String, Integer> reasons = new TreeMap<>();
         try {
             Map<Object, List<Machine>> machines = machineMolds();
             int fePerEU = fePerEU();
             long[] voltages = (long[]) gtValuesClass().getField("V").get(null);
             for (Recipe<?> source : level.getRecipeManager().getRecipes()) {
-                if (!source.getClass().getName().equals("com.gregtechceu.gtceu.api.recipe.GTRecipe")) continue;
+                if (source.getId().getNamespace().equals("gtlcore")) continue;
+                if (!com.sorrowmist.useless.compat.gtceu.GregTechParts.isA(source, "com.gregtechceu.gtceu.api.recipe.GTRecipe")) continue;
                 try {
                     AdvancedAlloyFurnaceRecipe converted = convertSource(source, machines, voltages, fePerEU);
-                    if (converted == null) { skipped++; continue; }
+                    if (converted == null) { skipped++; reasons.merge("unrepresented contents", 1, Integer::sum); continue; }
                     result.add(new CoreRecipeHolder<>(converted.id(), new GregTechSyntheticRecipe(converted)));
                 } catch (ReflectiveOperationException | RuntimeException exception) {
                     skipped++;
+                    String reason = exception instanceof UnsupportedOperationException ? exception.getMessage() : exception.getClass().getSimpleName() + ": " + exception.getMessage();
+                    reasons.merge(reason, 1, Integer::sum);
                     UselessMod.LOGGER.debug("Unsupported GTM recipe {}", source.getId(), exception);
                 }
             }
@@ -55,17 +59,25 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         List<CoreRecipeHolder<GregTechSyntheticRecipe>> recipes = List.copyOf(result);
         cache.put(level.getRecipeManager(), new Cached(generation, recipes));
         UselessMod.LOGGER.info("GTM alloy recipes: {} converted; {} with unsupported conditions or contents skipped", result.size(), skipped);
+        if (!reasons.isEmpty()) UselessMod.LOGGER.info("GTM skipped recipe categories: {}", reasons);
         return recipes;
     }
 
     private static AdvancedAlloyFurnaceRecipe convertSource(Recipe<?> source,
             Map<Object, List<Machine>> machines, long[] voltages, int fePerEU) throws ReflectiveOperationException {
-        // Supported conditions are retained on the native recipe and checked at execution time.
-        if (((Collection<?>) field(source, "conditions")).stream().anyMatch(condition ->
-                    !com.sorrowmist.useless.compat.gtceu.GregTechEnvironment.supports(condition))
-                || !((Collection<?>) field(source, "ingredientActions")).isEmpty()
-                || !((CompoundTag) field(source, "data")).isEmpty()
-                || optionalField(source, "outputModifier") != null) return null;
+        // Keep conditions for execution rather than discarding gated assembly-line recipes.
+        for (Object condition : (Collection<?>) field(source, "conditions"))
+            if (!com.sorrowmist.useless.compat.gtceu.GregTechEnvironment.supports(condition))
+                throw new UnsupportedOperationException("condition: " + condition.getClass().getSimpleName());
+        if (!((Collection<?>) field(source, "ingredientActions")).isEmpty())
+            throw new UnsupportedOperationException("ingredient actions");
+        CompoundTag metadata = (CompoundTag) field(source, "data");
+        // Only presentation/recipe-generation hints are inert during execution.
+        Set<String> inertKeys = Set.of("solder_multiplier", "disable_distillery", "hide_duration");
+        for (String key : metadata.getAllKeys()) if (!inertKeys.contains(key))
+            throw new UnsupportedOperationException("metadata: " + key);
+        if (optionalField(source, "outputModifier") != null)
+            throw new UnsupportedOperationException("dynamic output modifier");
         Object independent = Class.forName("com.gregtechceu.gtceu.api.recipe.chance.logic.ChanceLogic").getField("OR").get(null);
         for (var mapping : Map.of("inputChanceLogics", "inputs", "outputChanceLogics", "outputs",
                 "tickInputChanceLogics", "tickInputs", "tickOutputChanceLogics", "tickOutputs").entrySet()) {
@@ -76,18 +88,19 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
                 for (Object value : values) {
                     long chance = number(fieldOrAccessor(value, "chance"));
                     long maximum = number(fieldOrAccessor(value, "maxChance"));
-                    if (chance > 0 && chance < maximum) return null;
+                    if (chance > 0 && chance < maximum) throw new UnsupportedOperationException("dependent chance logic");
                 }
             }
         }
         int duration = ((Number) field(source, "duration")).intValue();
-        if (duration <= 0) return null;
+        if (duration <= 0) throw new UnsupportedOperationException("nonpositive duration");
         List<Part> inputs = parts(source, "inputs", 1);
         inputs.addAll(parts(source, "tickInputs", duration));
         List<Part> outputs = parts(source, "outputs", 1);
         outputs.addAll(parts(source, "tickOutputs", duration));
         if (inputs.stream().anyMatch(p -> !Set.of("item", "fluid", "eu").contains(p.capability))
-                || outputs.stream().anyMatch(p -> !Set.of("item", "fluid").contains(p.capability))) return null;
+                || outputs.stream().anyMatch(p -> !Set.of("item", "fluid").contains(p.capability)))
+            throw new UnsupportedOperationException("capabilities: " + inputs.stream().map(Part::capability).distinct().toList() + " -> " + outputs.stream().map(Part::capability).distinct().toList());
         long eut = 0, voltage = 0;
         for (Part part : inputs) {
             if (!part.capability.equals("eu")) continue;
@@ -102,11 +115,11 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         int minTier = 0;
         while (minTier < voltages.length && voltage > voltages[minTier]) minTier++;
         List<Machine> candidates = machines.get(source.getType());
-        if (candidates == null) return null;
+        if (candidates == null) throw new UnsupportedOperationException("no machine mold: " + source.getType());
         final int requiredTier = minTier;
         ItemStack[] machineChoices = candidates.stream().filter(m -> m.tier < 0 || m.tier >= requiredTier)
                 .map(Machine::stack).toArray(ItemStack[]::new);
-        if (machineChoices.length == 0) return null;
+        if (machineChoices.length == 0) throw new UnsupportedOperationException("no voltage-compatible mold: " + source.getType());
         List<Ingredient> molds = new ArrayList<>();
         molds.add(Ingredient.of(machineChoices));
         GregTechBatchPlan batch = GregTechBatchPlan.create(outputs.stream()
@@ -115,7 +128,7 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         List<LongSizedFluidIngredient> fluids = new ArrayList<>();
         for (Part input : inputs) {
             if (input.capability.equals("eu")) continue;
-            if (input.chance != 0 && input.chance != input.maximum) return null;
+            if (input.chance != 0 && input.chance != input.maximum) throw new UnsupportedOperationException("probabilistic input");
             long factor = batch.inputFactor(input.ticks);
             if (input.capability.equals("item")) {
                 Ingredient ingredient = (Ingredient) input.value;
@@ -126,13 +139,13 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
                 else items.add(new CountedIngredient(ingredient, Math.multiplyExact(amount, factor)));
             } else {
                 // Reusable fluids cannot be represented by the furnace's item mold slots.
-                if (input.chance == 0) return null;
+                if (input.chance == 0) throw new UnsupportedOperationException("nonconsumable fluid");
                 FluidStack[] stacks = fluidStacks(input.value);
-                int amount = fluidAmount(input.value);
+                long amount = fluidAmount(input.value);
                 if (stacks.length == 0 || amount <= 0) return null;
                 List<FluidIngredient> choices = new ArrayList<>();
                 for (FluidStack stack : stacks) {
-                    if (stack.isEmpty() || stack.getAmount() != amount) return null;
+                    if (stack.isEmpty() || stack.getAmount() != Math.min(amount, Integer.MAX_VALUE)) return null;
                     choices.add(DataComponentFluidIngredient.of(true, stack));
                 }
                 fluids.add(new LongSizedFluidIngredient(FluidIngredient.anyOf(choices), Math.multiplyExact(amount, factor)));
@@ -146,11 +159,11 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
             if (output.capability.equals("item")) {
                 Ingredient ingredient = (Ingredient) output.value;
                 ItemStack[] choices = ingredient.getItems();
-                if (choices.length != 1) return null; // Ambiguous/tag outputs are not a deterministic product.
+                if (choices.length != 1) throw new UnsupportedOperationException("ambiguous output"); // Ambiguous/tag outputs are not a deterministic product.
                 itemOutputs.add(choices[0].copyWithCount(Math.toIntExact(Math.multiplyExact(itemAmount(ingredient), factor))));
             } else {
                 FluidStack[] choices = fluidStacks(output.value);
-                if (choices.length != 1) return null;
+                if (choices.length != 1) throw new UnsupportedOperationException("ambiguous output");
                 FluidStack stack = choices[0].copy();
                 stack.setAmount(Math.toIntExact(Math.multiplyExact(fluidAmount(output.value), factor)));
                 fluidOutputs.add(stack);
@@ -183,13 +196,15 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         Map<Object, List<Machine>> result = new IdentityHashMap<>();
         for (Object definition : (Collection<?>) call(registry, "values")) {
             try {
-                // GT/GTL also register non-processing machines (hatches, storage, etc.).
+                // GT also register non-processing machines (hatches, storage, etc.).
                 // Their recipe type array may be null, and is not a catalog-wide failure.
                 Object[] types = (Object[]) call(definition, "getRecipeTypes");
                 if (types == null || types.length == 0) continue;
                 ItemStack stack = (ItemStack) call(definition, "asStack");
                 if (stack == null || stack.isEmpty()) continue;
-                int tier = ((Number) call(definition, "getTier")).intValue();
+                int tier = com.sorrowmist.useless.compat.gtceu.GregTechParts.isA(definition,
+                        "com.gregtechceu.gtceu.api.machine.MultiblockMachineDefinition")
+                        ? -1 : ((Number) call(definition, "getTier")).intValue();
                 for (Object type : types) {
                     if (type != null) result.computeIfAbsent(type, ignored -> new ArrayList<>()).add(new Machine(stack, tier));
                 }
@@ -207,9 +222,8 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
 
     private static int fePerEU() throws ReflectiveOperationException {
         Object holder = Class.forName("com.gregtechceu.gtceu.config.ConfigHolder").getField("INSTANCE").get(null);
-        int ratio = ((Number) field(field(field(holder, "compat"), "energy"), "feToEuRatio")).intValue();
-        if (ratio <= 0) throw new IllegalArgumentException("Invalid GT FE/EU conversion ratio");
-        return ratio;
+        Object config = field(field(holder, "compat"), "energy");
+        return GregTechEnergyCompat.fePerEU(config);
     }
 
     private static long itemAmount(Ingredient ingredient) throws ReflectiveOperationException {
@@ -224,9 +238,23 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
     }
     private static FluidStack[] fluidStacks(Object ingredient) throws ReflectiveOperationException {
         if (ingredient.getClass().getSimpleName().equals("IntProviderFluidIngredient")) throw new IllegalArgumentException("Random-sized GT fluid");
-        return (FluidStack[]) call(ingredient, "getStacks");
+        Object[] nativeStacks = (Object[]) call(ingredient, "getStacks");
+        FluidStack[] converted = new FluidStack[nativeStacks.length];
+        for (int i = 0; i < nativeStacks.length; i++) {
+            Object stack = nativeStacks[i];
+            if (stack instanceof FluidStack forge) converted[i] = forge;
+            else {
+                // Legacy GT uses LDLib long-sized fluid stacks, not Forge stacks.
+                long amount = number(call(stack, "getAmount"));
+                if (amount <= 0) throw new IllegalArgumentException("Invalid GT fluid amount");
+                CompoundTag tag = (CompoundTag) call(stack, "getTag");
+                converted[i] = new FluidStack((net.minecraft.world.level.material.Fluid) call(stack, "getFluid"),
+                        (int) Math.min(amount, Integer.MAX_VALUE), tag == null ? null : tag.copy());
+            }
+        }
+        return converted;
     }
-    private static int fluidAmount(Object ingredient) throws ReflectiveOperationException { return ((Number) call(ingredient, "getAmount")).intValue(); }
+    private static long fluidAmount(Object ingredient) throws ReflectiveOperationException { return number(call(ingredient, "getAmount")); }
     private static long number(Object value) { return ((Number) value).longValue(); }
     private static Object optionalField(Object target, String name) throws ReflectiveOperationException {
         try { return field(target, name); } catch (NoSuchFieldException absent) { return null; }

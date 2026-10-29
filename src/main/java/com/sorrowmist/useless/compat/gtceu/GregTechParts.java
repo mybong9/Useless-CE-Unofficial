@@ -26,8 +26,7 @@ public final class GregTechParts {
                     && (isA(machine, "com.gregtechceu.gtceu.api.capability.IDataAccessHatch")
                     || isA(machine, "com.gregtechceu.gtceu.common.machine.multiblock.part.OpticalComputationHatchMachine")
                     || isMaintenancePart(machine)
-                    || isA(machine, "com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider")
-                    || isA(machine, "org.gtlcore.gtlcore.common.machine.multiblock.part.maintenance.IGravityPartMachine"));
+                    || isA(machine, "com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider"));
             if (!hatch || !((Collection<?>) call(machine, "getControllers")).isEmpty()) return false;
             // Output optical hatches need a native workable controller; the furnace consumes inputs.
             try { if (Boolean.TRUE.equals(call(machine, "isTransmitter"))) return false; }
