@@ -10,6 +10,7 @@ import java.util.Set;
 /** Keeps optional integration targets out of Mixin's preparation phase when their mod is absent. */
 public final class UselessMixinPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
+        if (mixin.contains(".gtceu.")) return loaded("gtceu");
         if (mixin.contains(".tconstruct.")) return loaded("tconstruct");
         if (mixin.contains(".ftbultimine.")) return loaded("ftbultimine");
         if (mixin.contains(".emi.")) return loaded("emi");

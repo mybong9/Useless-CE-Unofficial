@@ -1449,5 +1449,14 @@
   "gui.useless_mod.staff_ui.ae": "AE 风格",
   "gui.useless_mod.staff_ui.resize": "拖动右下角调整窗口大小",
   "gui.useless_mod.staff_ui.chain_settings": "设置",
-  "gui.useless_mod.staff_ui.chain_state": "连锁：%s"
+  "gui.useless_mod.staff_ui.chain_state": "连锁：%s",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion": "启用 GTM 配方转换",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion.comment": "读取 GregTech CEu Modern 的机器配方，保留材料数量、流体和不消耗模具；环境和研究要求在万象炉运行时检查。修改后重启游戏生效。",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion.tooltip": "读取 GregTech CEu Modern 的机器配方，保留材料数量、流体和不消耗模具；环境和研究要求在万象炉运行时检查。修改后重启游戏生效。",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion": "启用 EHNN 配方转换",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion.comment": "接入同种四合一模型合并、按等级整段升级、各阶终极模拟室和战利品制造机；仅使用刚好达到等级起点的数据模型模板，保留原模组最低等级和黑名单要求。修改后重启游戏生效。",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion.tooltip": "接入同种四合一模型合并、按等级整段升级、各阶终极模拟室和战利品制造机；仅使用刚好达到等级起点的数据模型模板，保留原模组最低等级和黑名单要求。修改后重启游戏生效。",
+  "useless_mod.configuration.productive_bees_biome_restriction": "资源蜜蜂群系限制",
+  "useless_mod.configuration.productive_bees_biome_restriction.comment": "开启时保留资源蜜蜂万象配方的群系要求；关闭后允许在任意群系运行。立即生效，不改变材料、耗能与时间。",
+  "useless_mod.configuration.productive_bees_biome_restriction.tooltip": "开启时保留资源蜜蜂万象配方的群系要求；关闭后允许在任意群系运行。立即生效，不改变材料、耗能与时间。"
 }

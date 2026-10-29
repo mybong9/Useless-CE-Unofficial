@@ -70,6 +70,7 @@ import com.sorrowmist.useless.content.recipe.adapters.occultism.OccultismRitualR
 import com.sorrowmist.useless.content.recipe.adapters.botanypots.BotanyPotsRecipeAdapter;
 import com.sorrowmist.useless.content.recipe.adapters.powah.EnergizingRecipeAdapter;
 import com.sorrowmist.useless.content.recipe.adapters.productivebees.BeeProduceRecipeAdapter;
+import com.sorrowmist.useless.content.recipe.adapters.productivebees.ProductiveBeesExtraRecipeAdapter;
 import com.sorrowmist.useless.content.recipe.adapters.productivebees.BeeBreedingRecipeAdapter;
 import com.sorrowmist.useless.content.recipe.adapters.productivebees.BeeConversionRecipeAdapter;
 import com.sorrowmist.useless.content.recipe.adapters.productivebees.BeeFishingRecipeAdapter;
@@ -183,6 +184,8 @@ public final class RecipeAdapterCompatRegistry {
                     new com.sorrowmist.useless.content.recipe.adapters.actuallysubtractions.ActuallySubtractionsRecipeAdapter())),
             new CompatEntry("tconstruct", () -> register(
                     new com.sorrowmist.useless.content.recipe.adapters.tconstruct.TinkersRecipeAdapter())),
+            new CompatEntry("gtceu", () -> register(
+                    new com.sorrowmist.useless.content.recipe.adapters.gtceu.GregTechRecipeAdapter())),
             new CompatEntry("thermal", () -> register(
                     new com.sorrowmist.useless.content.recipe.adapters.thermal.ThermalMachineRecipeAdapter())),
             new CompatEntry("thermal_extra", () -> register(
@@ -218,6 +221,8 @@ public final class RecipeAdapterCompatRegistry {
 
             new CompatEntry(IRONS_SPELLBOOKS, RecipeAdapterCompatRegistry::registerIronsSpellbooks),
             new CompatEntry(HOSTILE_NETWORKS, RecipeAdapterCompatRegistry::registerHostileNetworks),
+            new CompatEntry("extrahnn", () -> register(
+                    new com.sorrowmist.useless.content.recipe.adapters.extrahnn.ExtraHostileRecipeAdapter())),
 
             new CompatEntry(FLUX_NETWORKS, RecipeAdapterCompatRegistry::registerFluxNetworks),
             new CompatEntry(APOTHEOSIS, RecipeAdapterCompatRegistry::registerApotheosis),
@@ -427,6 +432,7 @@ public final class RecipeAdapterCompatRegistry {
 
 
     private static void registerProductiveBees() {
+        register(new ProductiveBeesExtraRecipeAdapter());
         register(new BeeProduceRecipeAdapter());
         register(new CentrifugeRecipeAdapter());
         register(new BeeBreedingRecipeAdapter());

@@ -64,7 +64,7 @@ public final class BeeConversionRecipeAdapter implements IRecipeAdapter<BeeConve
 
         Optional<ExpectedOutputScaler.ScaledOutputs> scaled = ExpectedOutputScaler.scale(List.of(
                 new ExpectedOutputScaler.WeightedItemOutput(
-                        resultEgg, 1, 1, source.chance)));
+                        resultEgg, 1, 1, source.chance / 100.0d)));
         if (scaled.isEmpty() || scaled.get().outputs().isEmpty()) {
             LOGGER.warn("Skipping Productive Bees conversion recipe with unsupported chance: {}",
                     holder.id());
@@ -83,7 +83,7 @@ public final class BeeConversionRecipeAdapter implements IRecipeAdapter<BeeConve
                 AdapterUtils.convertedId(holder.id()),
                 List.of(
                         new CountedIngredient(source.item, operations),
-                        new CountedIngredient(com.sorrowmist.uselesscore.api.recipe.CoreDataComponentIngredient.of(true, sourceEgg), operations)),
+                        new CountedIngredient(com.sorrowmist.uselesscore.api.recipe.CoreDataComponentIngredient.of(true, sourceEgg), scaled.get().outputs().get(0).getCount())),
                 List.of(),
                 List.of(),
                 scaled.get().outputs(),

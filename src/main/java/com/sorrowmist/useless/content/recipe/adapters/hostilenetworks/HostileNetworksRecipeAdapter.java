@@ -33,6 +33,8 @@ import java.util.Optional;
 /** Converts Hostile Neural Networks simulation and fabricator operations. */
 public final class HostileNetworksRecipeAdapter
         implements IRecipeAdapter<HostileNetworksSyntheticRecipe> {
+    private record Cached(long generation, List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> recipes) {}
+    private final Map<Object, Cached> cache = new java.util.WeakHashMap<>();
     private static final String MOD_ID = RecipeSourceIds.HOSTILE_NETWORKS;
     private static final int SIMULATION_TRAINING_TIME = 300;
     private static final int SIMULATION_INFERENCE_TIME = 240;
@@ -59,23 +61,27 @@ public final class HostileNetworksRecipeAdapter
     @Override
     public boolean matchesMold(@Nullable ItemStack mold) {
         if (mold == null || mold.isEmpty()) return false;
-        // 数据模型整体作为模具参与匹配，具体品级交给模具原料的数据区间判定。
+        // 数据模型模板按等级起点判定，不枚举每次击杀后的数据值。
         return mold.is(Hostile.Items.SIM_CHAMBER.get())
                 || mold.is(Hostile.Items.LOOT_FABRICATOR.get())
                 || mold.is(Hostile.Items.DATA_MODEL.get());
     }
 
     @Override
-    public List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> getGeneratedRecipes(Level level) {
+    public synchronized List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> getGeneratedRecipes(Level level) {
         if (level == null) return List.of();
-
+        long generation = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeCatalog.generation();
+        Cached previous = cache.get(level.getRecipeManager());
+        if (previous != null && previous.generation() == generation) return previous.recipes();
         List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> result = new ArrayList<>();
         for (DataModel model : DataModelRegistry.INSTANCE.getValues()) {
             addTrainingRecipes(result, model);
             addInferenceRecipes(result, model);
             addFabricatorRecipes(result, model);
         }
-        return List.copyOf(result);
+        var recipes = List.copyOf(result);
+        cache.put(level.getRecipeManager(), new Cached(generation, recipes));
+        return recipes;
     }
 
     @Override
@@ -116,15 +122,7 @@ public final class HostileNetworksRecipeAdapter
         return List.copyOf(result);
     }
 
-    /**
-     * 按品级为模型生成升级配方。
-     *
-     * <p>每个品级本身就是一个数据区间 {@code [req(T), req(next(T)) - 1]}，与
-     * {@code ModelTierRegistry.getByData} 的判定保持一致。升级到下一品级消耗的矩阵数固定为
-     * 该品级的跨度 {@code req(next(T)) - req(T)}，产出的模型数据正好落在下一品级起点。
-     *
-     * <p>这样任意数据值的模型都能被唯一一条升级配方命中，不再要求数据精确等于某个阈值。
-     */
+    /** One recipe per tier transition, starting and ending at canonical threshold data. */
     private static void addTrainingRecipes(
             List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> result, DataModel model) {
         Ingredient matrix = CoreDataComponentIngredient.of(true, model.input());
@@ -148,7 +146,7 @@ public final class HostileNetworksRecipeAdapter
         int span = targetData - fromData;
         if (span <= 0) return;
 
-        Ingredient inputModel = DataModelRangeIngredient.of(model, tier);
+        Ingredient inputModel = DataModelRangeIngredient.atBoundary(model, tier);
         if (inputModel == null) return;
 
         // 每次模拟必定产出一个基础掉落，预测掉落按该品级准确率的期望值取整。
@@ -169,7 +167,7 @@ public final class HostileNetworksRecipeAdapter
         int processTime = safeProcessTime(multiply(SIMULATION_TRAINING_TIME, span));
         if (energy < 0L || processTime <= 0) return;
 
-        ResourceLocation id = recipeId(model, "training/" + tier.name());
+        ResourceLocation id = recipeId(model, "training/" + tier.name);
         if (id == null) return;
 
         AdvancedAlloyFurnaceRecipe recipe = new AdvancedAlloyFurnaceRecipe(
@@ -191,18 +189,10 @@ public final class HostileNetworksRecipeAdapter
         result.add(holder(recipe));
     }
 
-    /**
-     * 为每个可模拟品级生成一条推理配方。
-     *
-     * <p>模型放在模具槽中不被消耗，数据也保持不变，因此每个品级对应一条以该品级数据区间
-     * 为模具的配方。这样处于品级区间内任意数据值的模型都能推理，不再要求数据精确等于
-     * 品级起点。
-     */
+    /** Only max-tier models have a reusable inference recipe; lower tiers use whole-tier training. */
     private static void addInferenceRecipes(
             List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> result, DataModel model) {
-        for (ModelTier tier : List.of(ModelTier.values())) {
-            addInferenceRecipe(result, model, tier);
-        }
+        addInferenceRecipe(result, model, ModelTier.SELF_AWARE);
     }
 
     private static void addInferenceRecipe(
@@ -227,7 +217,7 @@ public final class HostileNetworksRecipeAdapter
         List<ItemStack> outputs = new ArrayList<>();
         if (!addAllOutputs(outputs, outputsFor.outputs()) || outputs.isEmpty()) return;
 
-        Ingredient mold = DataModelRangeIngredient.of(model, tier);
+        Ingredient mold = DataModelRangeIngredient.atBoundary(model, tier);
         if (mold == null) return;
 
         long perRunEnergy = multiply(model.simCost(), SIMULATION_INFERENCE_TIME);
@@ -235,7 +225,7 @@ public final class HostileNetworksRecipeAdapter
         int processTime = safeProcessTime(multiply(SIMULATION_INFERENCE_TIME, operations));
         if (energy < 0L || processTime <= 0) return;
 
-        ResourceLocation id = recipeId(model, "inference/" + tier.name());
+        ResourceLocation id = recipeId(model, "inference/" + tier.name);
         if (id == null) return;
 
         AdvancedAlloyFurnaceRecipe recipe = new AdvancedAlloyFurnaceRecipe(

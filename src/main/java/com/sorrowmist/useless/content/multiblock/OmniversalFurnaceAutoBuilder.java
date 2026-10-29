@@ -103,6 +103,10 @@ public final class OmniversalFurnaceAutoBuilder {
                 return failure("gui.useless_mod.multiblock_builder.no_permission");
             }
             BlockState current = level.getBlockState(pos);
+            if ((entry.part() == OmniversalAlloyFurnaceStructure.Part.CASING
+                    || entry.part() == OmniversalAlloyFurnaceStructure.Part.INTERFACE)
+                    && com.sorrowmist.useless.compat.gtceu.GregTechParts.accepts(level, pos)
+                    && !com.sorrowmist.useless.compat.gtceu.GregTechParts.claimedByOther(level, pos, corePos)) continue;
             OmniversalAlloyFurnaceStructure.FunctionalPart functionalPart =
                     functionalLayout.parts().get(pos);
             BlockState expected = expectedState(entry.part(), coilTier, functionalPart, facing);

@@ -78,18 +78,18 @@ public final class BeeFishingRecipeAdapter implements IRecipeAdapter<BeeFishingR
             return List.of();
         }
 
+        var scaled = com.sorrowmist.useless.content.recipe.ExpectedOutputScaler.scale(List.of(
+                new com.sorrowmist.useless.content.recipe.ExpectedOutputScaler.WeightedItemOutput(spawnEgg, 1, 1, source.chance)));
+        if (scaled.isEmpty() || scaled.get().outputs().isEmpty()) return List.of();
+        int operations = scaled.get().operations();
+        var water = com.sorrowmist.useless.content.recipe.ExpectedOutputScaler.multiplyToInt(WATER_PER_OPERATION, operations);
+        var energy = com.sorrowmist.useless.content.recipe.ExpectedOutputScaler.multiplyToInt(AdapterUtils.DEFAULT_ENERGY, operations);
+        var time = com.sorrowmist.useless.content.recipe.ExpectedOutputScaler.multiplyToInt(AdapterUtils.DEFAULT_PROCESS_TIME, operations);
+        if (water.isEmpty() || energy.isEmpty() || time.isEmpty()) return List.of();
         AdvancedAlloyFurnaceRecipe converted = new AdvancedAlloyFurnaceRecipe(
-                AdapterUtils.convertedId(holder.id()),
-                List.of(),
-                List.of(new FluidStack(Fluids.WATER, WATER_PER_OPERATION)),
-                List.of(spawnEgg),
-                List.of(),
-                AdapterUtils.DEFAULT_ENERGY,
-                AdapterUtils.DEFAULT_PROCESS_TIME,
-                Ingredient.EMPTY,
-                0,
-                Ingredient.of(Items.FISHING_ROD),
-                AlloyFurnaceMode.NORMAL);
+                AdapterUtils.convertedId(holder.id()), List.of(),
+                List.of(new FluidStack(Fluids.WATER, water.getAsInt())), scaled.get().outputs(), List.of(),
+                energy.getAsInt(), time.getAsInt(), Ingredient.EMPTY, 0, Ingredient.of(Items.FISHING_ROD), AlloyFurnaceMode.NORMAL);
         return List.of(converted);
     }
 
@@ -109,7 +109,8 @@ public final class BeeFishingRecipeAdapter implements IRecipeAdapter<BeeFishingR
             if (source == null || resolveSpawnEgg(source).isEmpty()) {
                 continue;
             }
-            if (availableWater(mergedFluids) >= WATER_PER_OPERATION) {
+            List<AdvancedAlloyFurnaceRecipe> converted = convertAll(holder, level);
+            if (!converted.isEmpty() && availableWater(mergedFluids) >= converted.get(0).inputFluids().get(0).amount()) {
                 matches.add(holder);
             }
         }

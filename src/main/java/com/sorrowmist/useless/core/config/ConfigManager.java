@@ -39,6 +39,8 @@ public class ConfigManager {
     private static final ForgeConfigSpec.IntValue CHAIN_MINING_RANGE_Z;
     private static final ForgeConfigSpec.IntValue CHAIN_MINING_MAX_BLOCKS;
     private static final ForgeConfigSpec.BooleanValue ENABLE_TINKERS_TOOL_CHAIN_MINING;
+    private static final ForgeConfigSpec.BooleanValue ENABLE_EXTRA_HNN_RECIPE_CONVERSION;
+    private static final ForgeConfigSpec.BooleanValue ENABLE_GTCEU_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_TCONSTRUCT_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.DoubleValue BEEF_TOOL_FLIGHT_SPEED;
     // 牛排工具附魔等级配置
@@ -143,6 +145,7 @@ public class ConfigManager {
     private static final ForgeConfigSpec.BooleanValue ENABLE_AE2LT_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_DATA_ENERGISTICS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_PRODUCTIVE_BEES_RECIPE_CONVERSION;
+    private static final ForgeConfigSpec.BooleanValue PRODUCTIVE_BEES_BIOME_RESTRICTION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_DRACONIC_EVOLUTION_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_POWAH_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_EXTENDED_CRAFTING_RECIPE_CONVERSION;
@@ -784,6 +787,8 @@ public class ConfigManager {
                 "enable_crazy_ae_recipe_conversion", true);
         ENABLE_THERMAL_RECIPE_CONVERSION = defineRecipeConversionOption(
                 "enable_thermal_recipe_conversion", true);
+        ENABLE_EXTRA_HNN_RECIPE_CONVERSION = defineRecipeConversionOption("enable_extra_hnn_recipe_conversion", true);
+        ENABLE_GTCEU_RECIPE_CONVERSION = defineRecipeConversionOption("enable_gtceu_recipe_conversion", true);
         ENABLE_TCONSTRUCT_RECIPE_CONVERSION=defineRecipeConversionOption("enable_tconstruct_recipe_conversion",true);
         ENABLE_THERMAL_EXTRA_RECIPE_CONVERSION = defineRecipeConversionOption(
                 "enable_thermal_extra_recipe_conversion", true);
@@ -821,6 +826,10 @@ public class ConfigManager {
                 "enable_powah_recipe_conversion", true);
         ENABLE_PRODUCTIVE_BEES_RECIPE_CONVERSION = defineRecipeConversionOption(
                 "enable_productive_bees_recipe_conversion", true);
+        PRODUCTIVE_BEES_BIOME_RESTRICTION = COMMON_BUILDER
+                .comment("是否保留资源蜜蜂万象配方的原生群系要求；关闭后可以在任意群系运行，不改变材料、耗能和时间。")
+                .translation("useless_mod.configuration.productive_bees_biome_restriction")
+                .define("productive_bees_biome_restriction", true);
         ENABLE_SUMMONING_RITUALS_RECIPE_CONVERSION = defineRecipeConversionOption(
                 "enable_summoningrituals_recipe_conversion", true);
         ENABLE_UFO_RECIPE_CONVERSION = defineRecipeConversionOption(
@@ -856,6 +865,8 @@ public class ConfigManager {
                 Map.entry("voidminers", ENABLE_VOID_MINERS_RECIPE_CONVERSION),
                 Map.entry("crazyae2addons", ENABLE_CRAZY_AE_RECIPE_CONVERSION),
                 Map.entry("thermal", ENABLE_THERMAL_RECIPE_CONVERSION),
+                Map.entry("extrahnn", ENABLE_EXTRA_HNN_RECIPE_CONVERSION),
+                Map.entry("gtceu", ENABLE_GTCEU_RECIPE_CONVERSION),
                 Map.entry("tconstruct", ENABLE_TCONSTRUCT_RECIPE_CONVERSION),
                 Map.entry("thermal_extra", ENABLE_THERMAL_EXTRA_RECIPE_CONVERSION),
                 Map.entry("nuclearcraft", ENABLE_NUCLEARCRAFT_RECIPE_CONVERSION),
@@ -1137,6 +1148,10 @@ public class ConfigManager {
     public static boolean isRecipeConversionEnabled(String sourceId) {
         ForgeConfigSpec.BooleanValue option = RECIPE_CONVERSION_OPTIONS.get(sourceId);
         return option == null || getConfigValue(option);
+    }
+
+    public static boolean isProductiveBeesBiomeRestrictionEnabled() {
+        return getConfigValue(PRODUCTIVE_BEES_BIOME_RESTRICTION);
     }
 
     public static boolean isVoidMinersDimensionRestrictionEnabled() {

@@ -681,6 +681,12 @@ public class CraftingTask {
 
         if (!awaitingOutputFlush) {
             AdvancedAlloyFurnaceRecipe recipe = findTaskRecipe();
+            var gtEnvironment = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeEnvironment.check(context, recipe);
+            if (!gtEnvironment.available()) {
+                setWaiting(gtEnvironment.statusKey(), gtEnvironment.statusDetail());
+                updateWaitingProgress();
+                return false;
+            }
             ResolvedCatalystEffect resolvedCatalystEffect = getCatalystEffect(recipe);
             // 下方会先把状态置回处理中、再视能量改回等待，故记下本 tick 前的状态，用来判断等待状态是否真的变化
             String previousStatusKey = taskProgressRef == null ? null : taskProgressRef.getStatusKey();

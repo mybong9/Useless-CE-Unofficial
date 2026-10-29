@@ -3,6 +3,8 @@
   "package": "com.sorrowmist.useless.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "gtceu.FurnaceHatchFormedMixin",
+    "gtceu.StaffToolTypesMixin",
     "tconstruct.TinkerHarvestMixin",
     "ftbultimine.OwnedChainMiningMixin",
     "eae.EaepBookmarkPatternMixin",

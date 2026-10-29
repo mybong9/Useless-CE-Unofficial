@@ -78,15 +78,17 @@ public final class OmniversalAlloyFurnaceStructure {
                                    @Nullable BlockPos moldHubPos,
                                    @Nullable BlockPos passiveHatchPos,
                                    List<Mismatch> mismatches,
-                                   List<BlockPos> assemblies,List<BlockPos> moldHubs,List<BlockPos> passiveHatches) {
+                                   List<BlockPos> assemblies,List<BlockPos> moldHubs,List<BlockPos> passiveHatches,
+                                   List<BlockPos> gregTechParts) {
         public ValidationResult(boolean valid,int coilTier,BlockPos assembly,BlockPos hub,BlockPos hatch,List<Mismatch> mismatches) {
-            this(valid,coilTier,assembly,hub,hatch,mismatches,List.of(),List.of(),List.of());
+            this(valid,coilTier,assembly,hub,hatch,mismatches,List.of(),List.of(),List.of(),List.of());
         }
         public ValidationResult {
             patternAssemblyPos = patternAssemblyPos == null ? null : patternAssemblyPos.immutable();
             moldHubPos = moldHubPos == null ? null : moldHubPos.immutable();
             passiveHatchPos = passiveHatchPos == null ? null : passiveHatchPos.immutable();
             mismatches = List.copyOf(mismatches);
+            gregTechParts=List.copyOf(gregTechParts);
             assemblies=List.copyOf(assemblies);moldHubs=List.copyOf(moldHubs);passiveHatches=List.copyOf(passiveHatches);
         }
     }
@@ -114,6 +116,7 @@ public final class OmniversalAlloyFurnaceStructure {
         BlockPos moldHubPos = null;
         BlockPos passiveHatchPos = null;
         List<BlockPos> assemblies=new ArrayList<>(),hubs=new ArrayList<>(),hatches=new ArrayList<>();
+        List<BlockPos> gtParts = new ArrayList<>();
 
         for (Entry entry : ENTRIES) {
             BlockPos worldPos = entry.worldPos(corePos, facing);
@@ -131,6 +134,13 @@ public final class OmniversalAlloyFurnaceStructure {
                 } else {
                     mismatches.add(new Mismatch(worldPos, Part.COIL, state));
                 }
+                continue;
+            }
+            if ((entry.part == Part.CASING || entry.part == Part.INTERFACE)
+                    && com.sorrowmist.useless.compat.gtceu.GregTechParts.accepts(level, worldPos)) {
+                if (com.sorrowmist.useless.compat.gtceu.GregTechParts.claimedByOther(level, worldPos, corePos))
+                    mismatches.add(new Mismatch(worldPos, entry.part, state));
+                else gtParts.add(worldPos.immutable());
                 continue;
             }
             if (entry.part == Part.CASING) {
@@ -194,7 +204,7 @@ public final class OmniversalAlloyFurnaceStructure {
             mismatches.add(new Mismatch(passiveHatchPos, Part.CASING, level.getBlockState(passiveHatchPos)));
         }
         return new ValidationResult(mismatches.isEmpty() && functionalCountsValid && coilTier > 0,
-                coilTier, assemblyPos, moldHubPos, passiveHatchPos, mismatches,assemblies,hubs,hatches);
+                coilTier, assemblyPos, moldHubPos, passiveHatchPos, mismatches,assemblies,hubs,hatches,gtParts);
     }
 
     public static boolean isFunctionalPartCountsValid(

@@ -1445,5 +1445,14 @@
   "gui.useless_mod.staff_ui.ae": "AE style",
   "gui.useless_mod.staff_ui.resize": "Drag the corner to resize",
   "gui.useless_mod.staff_ui.chain_settings": "Setup",
-  "gui.useless_mod.staff_ui.chain_state": "Chain: %s"
+  "gui.useless_mod.staff_ui.chain_state": "Chain: %s",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion": "Enable GTM recipe conversion",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion.comment": "Read GregTech CEu Modern machine recipes. Environment and native data-hatch research requirements are checked at runtime. Requires restart.",
+  "useless_mod.configuration.enable_gtceu_recipe_conversion.tooltip": "Read GregTech CEu Modern machine recipes. Environment and native data-hatch research requirements are checked at runtime. Requires restart.",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion": "Enable EHNN recipe conversion",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion.comment": "Convert four equal models, full-tier upgrades, ultimate simulation and fabrication. Only tier-boundary model templates are generated. Requires restart.",
+  "useless_mod.configuration.enable_extra_hnn_recipe_conversion.tooltip": "Convert four equal models, full-tier upgrades, ultimate simulation and fabrication. Only tier-boundary model templates are generated. Requires restart.",
+  "useless_mod.configuration.productive_bees_biome_restriction": "Productive Bees biome restriction",
+  "useless_mod.configuration.productive_bees_biome_restriction.comment": "Keep native biome requirements for Productive Bees furnace recipes. Disable to run in any biome. Takes effect immediately; costs and duration are unchanged.",
+  "useless_mod.configuration.productive_bees_biome_restriction.tooltip": "Keep native biome requirements for Productive Bees furnace recipes. Disable to run in any biome. Takes effect immediately; costs and duration are unchanged."
 }

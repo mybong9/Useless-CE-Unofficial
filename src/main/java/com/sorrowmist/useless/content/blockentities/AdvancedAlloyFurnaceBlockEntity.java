@@ -690,6 +690,7 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
      */
     private void processCurrentRecipe() {
         if (this.currentRecipe == null) return;
+        if (!com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeEnvironment.check(this, this.currentRecipe).available()) return;
 
         // 每20tick检查一次配方是否切换，避免评分系统不稳定导致连续重启；
         // 等能量时进度停在同一值，靠搜索节流避免逐 tick 重复检查
@@ -1611,7 +1612,8 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
      * @return 匹配的配方，如果没有则返回空
      */
     private Optional<AdvancedAlloyFurnaceRecipe> findMatchingRecipe() {
-        return this.recipeCalculator.findMatchingRecipe(this.level, this.furnaceTier);
+        return this.recipeCalculator.findMatchingRecipe(this.level, this.furnaceTier)
+                .filter(recipe -> com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeEnvironment.check(this, recipe).available());
     }
 
     /**

@@ -67,18 +67,18 @@ public final class BeefToolModuleRegistry {
                     Availability.ALWAYS, true),
             new Definition(ENCHANT_FORTUNE, EnchantMode.FORTUNE.getTooltip(), GroupKind.TOOLS,
                     Availability.ALWAYS, true),
-            new Definition(TOOL_NONE, ToolTypeMode.NONE_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
-            new Definition(TOOL_WRENCH, ToolTypeMode.WRENCH_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
-            new Definition(TOOL_SCREWDRIVER, ToolTypeMode.SCREWDRIVER_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
-            new Definition(TOOL_MALLET, ToolTypeMode.MALLET_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
-            new Definition(TOOL_CROWBAR, ToolTypeMode.CROWBAR_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
-            new Definition(TOOL_HAMMER, ToolTypeMode.HAMMER_MODE.getTooltip(), GroupKind.TOOLS,
-                    Availability.REMOVED, true),
+            new Definition(TOOL_NONE, ToolTypeMode.NONE_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
+            new Definition(TOOL_WRENCH, ToolTypeMode.WRENCH_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
+            new Definition(TOOL_SCREWDRIVER, ToolTypeMode.SCREWDRIVER_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
+            new Definition(TOOL_MALLET, ToolTypeMode.MALLET_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
+            new Definition(TOOL_CROWBAR, ToolTypeMode.CROWBAR_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
+            new Definition(TOOL_HAMMER, ToolTypeMode.HAMMER_MODE.getTooltip(), GroupKind.GREGTECH,
+                    Availability.GREGTECH, true),
             new Definition(TOOL_OMNITOOL, ToolTypeMode.OMNITOOL_MODE.getTooltip(), GroupKind.TOOLS,
                     Availability.OMNITOOLS, false),
             new Definition(CONSTRUCTION_WAND, ModeTypeEnum.CONSTRUCTION_WAND_ENABLED.getTooltip(), GroupKind.MINING,
@@ -273,6 +273,8 @@ public final class BeefToolModuleRegistry {
         addMissingModules(layout, target, AUTO_VANILLA_MODULES, GroupKind.VANILLA);
         addMissingModules(layout, target, AUTO_MINING_MODULES, GroupKind.MINING);
         addMissingModules(layout, target, AUTO_EXDEORUM_MODULES, GroupKind.EXDEORUM);
+        addMissingModules(layout, target, List.of(TOOL_NONE, TOOL_WRENCH, TOOL_SCREWDRIVER,
+                TOOL_MALLET, TOOL_CROWBAR, TOOL_HAMMER), GroupKind.GREGTECH);
     }
 
     /**
@@ -570,7 +572,8 @@ public final class BeefToolModuleRegistry {
          * <p>该分组的模块全部来自 exdeorum，因此绑定 {@code exdeorum} 作为前置模组：
          * 未加载时默认布局不生成该分组，避免出现一个没有任何按钮的空分组。</p>
          */
-        EXDEORUM("Ex Deorum", "exdeorum");
+        EXDEORUM("Ex Deorum", "exdeorum"),
+        GREGTECH("GregTech", "gtceu");
 
         private final String defaultName;
         private final String requiredMod;
@@ -647,6 +650,12 @@ public final class BeefToolModuleRegistry {
             boolean isAvailable(ItemStack target) {
                 return ModList.get().isLoaded("mysticalagriculture") && target != null
                         && target.getItem() instanceof EndlessBeafItem;
+            }
+        },
+        GREGTECH {
+            @Override
+            boolean isAvailable(ItemStack target) {
+                return ModList.get().isLoaded("gtceu") && BeefToolVariants.isBeafTool(target);
             }
         },
         REMOVED {

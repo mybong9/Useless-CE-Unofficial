@@ -106,6 +106,8 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
     @Nullable
     private BlockPos passiveHatchPos;
     private List<BlockPos> assemblyPositions=List.of(),moldHubPositions=List.of(),passiveHatchPositions=List.of();
+    private List<BlockPos> gregTechParts = List.of();
+    public List<BlockPos> getGregTechParts() { return formed ? gregTechParts : List.of(); }
     private long combinedMoldRevision=Long.MIN_VALUE;
     private java.util.Map<Integer,ItemStack> combinedMolds=java.util.Map.of();
     private com.sorrowmist.useless.content.recipe.MoldMatcher.PreparedMolds combinedMoldMatcher;
@@ -236,7 +238,8 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
                 || !java.util.Objects.equals(passiveHatchPos, validatedHatchPos)
                 || !assemblyPositions.equals(result.valid()?result.assemblies():List.of())
                 || !moldHubPositions.equals(result.valid()?result.moldHubs():List.of())
-                || !passiveHatchPositions.equals(result.valid()?result.passiveHatches():List.of());
+                || !passiveHatchPositions.equals(result.valid()?result.passiveHatches():List.of())
+                || !gregTechParts.equals(result.valid() ? result.gregTechParts() : List.of());
         formed = result.valid();
         coilTier = validatedCoilTier;
         patternAssemblyPos = validatedAssemblyPos == null ? null : validatedAssemblyPos.immutable();
@@ -245,6 +248,8 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
         assemblyPositions=result.valid()?result.assemblies():List.of();
         moldHubPositions=result.valid()?result.moldHubs():List.of();
         passiveHatchPositions=result.valid()?result.passiveHatches():List.of();
+        gregTechParts = result.valid() ? result.gregTechParts() : List.of();
+        com.sorrowmist.useless.compat.gtceu.GregTechParts.bind(this, gregTechParts);
         if (stateChanged) {
             structureGeneration++;
             if (formed) {
@@ -674,6 +679,8 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
 
     @Override
     public CraftingTaskContext.TaskAvailability getTaskAvailability(AdvancedAlloyFurnaceRecipe recipe) {
+        var gt = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeEnvironment.check(this, recipe);
+        if (!gt.available()) return gt;
         if (!com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
                 .allowsDimension(recipe, getLevel())) {
             return CraftingTaskContext.TaskAvailability.unavailable(
@@ -971,6 +978,7 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
 
     @Override
     public void onChunkUnloaded() {
+        com.sorrowmist.useless.compat.gtceu.GregTechParts.release(this);
         unloading = true;
         super.onChunkUnloaded();
     }
@@ -1000,6 +1008,7 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
 
     @Override
     public void setRemoved() {
+        com.sorrowmist.useless.compat.gtceu.GregTechParts.release(this);
         unloading = true;
         super.setRemoved();
         aeManager.shutdown();

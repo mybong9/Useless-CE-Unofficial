@@ -164,6 +164,8 @@ public interface CraftingTaskContext {
     }
 
     default TaskAvailability getTaskAvailability(AdvancedAlloyFurnaceRecipe recipe) {
+        var gt = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeEnvironment.check(this, recipe);
+        if (!gt.available()) return gt;
         if (!com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
                 .allowsDimension(recipe, getLevel())) {
             return TaskAvailability.unavailable(

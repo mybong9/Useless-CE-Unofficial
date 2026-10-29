@@ -252,6 +252,11 @@ public class UItemTagsProvider extends ItemTagsProvider {
         this.tag(mallet).replace(false).add(ModItems.ENDLESS_BEAF_MALLET.get());
         this.tag(screwdriver).replace(false).add(ModItems.ENDLESS_BEAF_SCREWDRIVER.get());
         this.tag(wrench).replace(false).add(ModItems.ENDLESS_BEAF_WRENCH.get());
+        this.tag(this.createExternalTagKey("gtceu", "tools/crafting_wrenches")).replace(false).add(ModItems.ENDLESS_BEAF_WRENCH.get());
+        this.tag(this.createExternalTagKey("gtceu", "tools/crafting_screwdrivers")).replace(false).add(ModItems.ENDLESS_BEAF_SCREWDRIVER.get());
+        this.tag(this.createExternalTagKey("gtceu", "tools/crafting_mallets")).replace(false).add(ModItems.ENDLESS_BEAF_MALLET.get());
+        this.tag(this.createExternalTagKey("gtceu", "tools/crafting_crowbars")).replace(false).add(ModItems.ENDLESS_BEAF_CROWBAR.get());
+        this.tag(this.createExternalTagKey("gtceu", "tools/crafting_hammers")).replace(false).add(ModItems.ENDLESS_BEAF_HAMMER.get());
 
         this.tag(file)
             .replace(false)
