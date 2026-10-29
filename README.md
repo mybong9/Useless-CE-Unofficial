@@ -26,7 +26,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **
 | --- | --- | --- | --- |
 | Minecraft Forge | `forge` | 47 或更高 | 客户端、服务端 |
 | [Useless Core](https://github.com/mybong9/Useless-Core) | `useless_core` | 1.0.14 或更高| 客户端、服务端 |
-| Minecraft | `minecraft` | 1.20.1 或更高 | 客户端、服务端 |
+| Minecraft | `minecraft` | 1.20.1| 客户端、服务端 |
 | Applied Energistics 2（AE2） | `ae2` | 15.0.0 或更高 | 客户端、服务端 |
 
 ### 可选联动
