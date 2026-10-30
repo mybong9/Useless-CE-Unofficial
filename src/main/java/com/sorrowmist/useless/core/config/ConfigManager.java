@@ -41,6 +41,7 @@ public class ConfigManager {
     private static final ForgeConfigSpec.BooleanValue ENABLE_TINKERS_TOOL_CHAIN_MINING;
     private static final ForgeConfigSpec.BooleanValue ENABLE_EXTRA_HNN_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_GTCEU_RECIPE_CONVERSION;
+    private static final ForgeConfigSpec.BooleanValue ENABLE_WOOT_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_TCONSTRUCT_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.DoubleValue BEEF_TOOL_FLIGHT_SPEED;
     // 牛排工具附魔等级配置
@@ -788,6 +789,7 @@ public class ConfigManager {
         ENABLE_THERMAL_RECIPE_CONVERSION = defineRecipeConversionOption(
                 "enable_thermal_recipe_conversion", true);
         ENABLE_EXTRA_HNN_RECIPE_CONVERSION = defineRecipeConversionOption("enable_extra_hnn_recipe_conversion", true);
+        ENABLE_WOOT_RECIPE_CONVERSION = defineRecipeConversionOption("enable_woot_recipe_conversion", true);
         ENABLE_GTCEU_RECIPE_CONVERSION = defineRecipeConversionOption("enable_gtceu_recipe_conversion", true);
         ENABLE_TCONSTRUCT_RECIPE_CONVERSION=defineRecipeConversionOption("enable_tconstruct_recipe_conversion",true);
         ENABLE_THERMAL_EXTRA_RECIPE_CONVERSION = defineRecipeConversionOption(
@@ -866,6 +868,7 @@ public class ConfigManager {
                 Map.entry("crazyae2addons", ENABLE_CRAZY_AE_RECIPE_CONVERSION),
                 Map.entry("thermal", ENABLE_THERMAL_RECIPE_CONVERSION),
                 Map.entry("extrahnn", ENABLE_EXTRA_HNN_RECIPE_CONVERSION),
+                Map.entry("woot_revived", ENABLE_WOOT_RECIPE_CONVERSION),
                 Map.entry("gtceu", ENABLE_GTCEU_RECIPE_CONVERSION),
                 Map.entry("tconstruct", ENABLE_TCONSTRUCT_RECIPE_CONVERSION),
                 Map.entry("thermal_extra", ENABLE_THERMAL_EXTRA_RECIPE_CONVERSION),

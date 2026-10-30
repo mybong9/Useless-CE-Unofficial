@@ -1454,5 +1454,8 @@
   "useless_mod.configuration.enable_extra_hnn_recipe_conversion.tooltip": "Convert four equal models, full-tier upgrades, ultimate simulation and fabrication. Only tier-boundary model templates are generated. Requires restart.",
   "useless_mod.configuration.productive_bees_biome_restriction": "Productive Bees biome restriction",
   "useless_mod.configuration.productive_bees_biome_restriction.comment": "Keep native biome requirements for Productive Bees furnace recipes. Disable to run in any biome. Takes effect immediately; costs and duration are unchanged.",
-  "useless_mod.configuration.productive_bees_biome_restriction.tooltip": "Keep native biome requirements for Productive Bees furnace recipes. Disable to run in any biome. Takes effect immediately; costs and duration are unchanged."
+  "useless_mod.configuration.productive_bees_biome_restriction.tooltip": "Keep native biome requirements for Productive Bees furnace recipes. Disable to run in any biome. Takes effect immediately; costs and duration are unchanged.",
+  "useless_mod.configuration.enable_woot_recipe_conversion": "Enable Woot Revived recipe conversion",
+  "useless_mod.configuration.enable_woot_recipe_conversion.comment": "Woot machines and baseline factory loot. One ordinary book produces 20 B enchanted fluid; enchanted-book extraction is excluded. Rejoin after changing.",
+  "useless_mod.configuration.enable_woot_recipe_conversion.tooltip": "Woot machines and baseline factory loot. One ordinary book produces 20 B enchanted fluid; enchanted-book extraction is excluded. Rejoin after changing."
 }

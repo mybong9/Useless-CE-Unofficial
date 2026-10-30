@@ -2,7 +2,7 @@
 
 This is an **unofficial Forge 1.20.1 port/community edition**, not an official upstream release.
 
-Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **1.4.3**.
+Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **1.4.4**.
 
 本仓库为该模组的独立源码仓库。请查看 [构建说明 / Building](BUILDING.md)
 了解四个仓库的联合构建方式；发布更新记录见 [CHANGELOG.md](CHANGELOG.md)。
@@ -17,7 +17,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **
 <!-- runtime-dependencies:start -->
 ## 运行环境与依赖版本
 
-对应发布版本：**1.4.3**。本工程目标为 **Minecraft 1.20.1 / Forge**，使用 **Java 17+**（编译目标为 Java 17）。
+对应发布版本：**1.4.4**。本工程目标为 **Minecraft 1.20.1 / Forge**，使用 **Java 17+**（编译目标为 Java 17）。
 以下依赖范围直接依据该版本发布 JAR 的 `META-INF/mods.toml`，不是编译时所用依赖版本。
 
 ### 必需前置
@@ -43,6 +43,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **
 | EMI | `emi` | 1.0.0 或更高 | 客户端、服务端 |
 | AdvancedAE | `advancedae` | 1.0.0 或更高 | 客户端、服务端 |
 | ExtendedAE | `expatternprovider` | 1.0.0 或更高 | 客户端、服务端 |
+| Woot Revived | `woot_revived` | 未限定最低版本（对照 20.1.1.9） | 客户端、服务端 |
 | GregTech CEu Modern（GTM） | `gtceu` | 未限定最低版本 | 客户端、服务端 |
 | HNN | `hostilenetworks` | 未限定最低版本 | 客户端、服务端 |
 | EHNN | `extrahnn` | 未限定最低版本 | 客户端、服务端 |
@@ -101,3 +102,13 @@ crash reports, local configuration, caches, credentials and third-party dependen
 
 
 不提供 GTL 专用联动：不转换 `gtlcore` 命名空间配方，不识别 GTL 重力维护仓或其专用环境条件。普通 GTM 的研究、洁净室及机器配方联动保留。
+
+## Woot Revived 联动
+
+Woot Revived（`woot_revived`）为可选联动，无版本上限；本次对照 Forge 1.20.1 的 20.1.1.9 接口。通用配置 `enable_woot_recipe_conversion` 可关闭转换。
+
+- 冥河铁砧使用铁砧与冥河锤作模具；由怪物碎片制作控制器时，要求完整编程并保留输出的生物 NBT。物品／流体灌注机、染料液化机使用对应机器作为模具。染料配方补齐缺少的基础颜色后按原生配置产出纯染料，不把单种颜色当作完整纯染料。
+- 附魔液化机模具下，1 本普通书产出 20 B（20,000 mB）附魔流体。不生成附魔书提取配方。耗能沿用 Woot 的单级附魔处理耗能配置，时间按原配置处理速率计算。
+- 基础怪物工厂使用工厂之心与已完成编程的碎片作模具，保留生命燃料、召唤材料及基础时间，战利品表按精确有理数折算确定批次。碎片完整 NBT 必须匹配。
+- 不自动接入任意附属动态掉落回调、变体和升级模块产物。未知条件／函数不当作无条件奖励；无法表示的分支跳过并记录。当前按未安装升级的基础掉落处理，不提供经验输出。
+- 配方由服务器生成并分批同步，联机客户端可用 JEI 与万象样板。客户端和服务器均需更新到本版本以匹配网络协议。
