@@ -877,6 +877,7 @@ public class EndlessBeafItem extends TieredItem {
         }
 
         try {
+            com.sorrowmist.useless.compat.botania.GaiaForceKillCompat.prepare(target, player);
             executeForceKill(context);
 
             if (!isDeathCommitted(target) && !context.deathEventAttempted) {
