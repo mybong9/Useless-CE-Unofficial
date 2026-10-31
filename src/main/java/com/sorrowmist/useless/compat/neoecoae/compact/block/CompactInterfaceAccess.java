@@ -58,11 +58,8 @@ public final class CompactInterfaceAccess {
 
         @Override
         protected OpenRequest readHolderFromSyncData(FriendlyByteBuf buffer) {
-            BlockPos pos = buffer.readBlockPos();
-            boolean interfaceMode = buffer.readBoolean();
-            Level level = Minecraft.getInstance().level;
-            BlockEntity host = level == null ? null : level.getBlockEntity(pos);
-            return host instanceof CompactUiHost ? new OpenRequest(host, interfaceMode) : null;
+            // Keep ClientLevel bytecode out of the factory loaded during server registration.
+            return ClientAccess.read(buffer);
         }
 
         @Override
@@ -70,5 +67,17 @@ public final class CompactInterfaceAccess {
             buffer.writeBlockPos(request.host().getBlockPos());
             buffer.writeBoolean(request.interfaceMode());
         }
+    }
+
+    @net.minecraftforge.api.distmarker.OnlyIn(net.minecraftforge.api.distmarker.Dist.CLIENT)
+    private static final class ClientAccess {
+        private static OpenRequest read(FriendlyByteBuf buffer) {
+            BlockPos pos = buffer.readBlockPos();
+            boolean interfaceMode = buffer.readBoolean();
+            Level level = Minecraft.getInstance().level;
+            BlockEntity host = level == null ? null : level.getBlockEntity(pos);
+            return host instanceof CompactUiHost ? new OpenRequest(host, interfaceMode) : null;
+        }
+
     }
 }
