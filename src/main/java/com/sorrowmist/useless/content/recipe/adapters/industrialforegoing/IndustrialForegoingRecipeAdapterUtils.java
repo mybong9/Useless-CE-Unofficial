@@ -35,7 +35,10 @@ final class IndustrialForegoingRecipeAdapterUtils {
 
     static boolean isValidRawMaterialTag(ResourceLocation id) {
         return id != null
-                && ("c".equals(id.getNamespace()) || "forge".equals(id.getNamespace()))
+                // Native IF 1.20.1 serializes this tag into fluid NBT and only
+                // understands forge:raw_materials/. Passing c: tags also breaks
+                // its downstream dust lookup, not just this validity check.
+                && "forge".equals(id.getNamespace())
                 && id.getPath().startsWith("raw_materials/")
                 && OreTitaniumFluidType.isValid(id);
     }
