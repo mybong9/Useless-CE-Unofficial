@@ -105,7 +105,7 @@ public final class OmniversalFurnaceDismantler {
                     if (preview==null || storage.insert(preview,1,Actionable.SIMULATE,source)<1) {
                         message(job.player,"full"); stopped=true; break;
                     }
-                    if (ForgeHooks.onBlockBreakEvent(job.level,job.player.gameMode.getGameModeForPlayer(),job.player,target.pos())<0) {
+                    if (com.sorrowmist.useless.utils.mining.MiningDispatcher.checkStructureBreak(job.player,target.pos())<0) {
                         message(job.player,"protected"); stopped=true; break;
                     }
                     var outcome=MiningUtils.destroyBlockAndCollectDrops(job.level,target.pos(),state,job.player,job.tool,false);

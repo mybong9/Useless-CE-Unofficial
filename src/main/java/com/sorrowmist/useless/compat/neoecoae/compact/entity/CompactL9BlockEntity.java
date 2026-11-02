@@ -10,7 +10,6 @@ import appeng.api.storage.IStorageProvider;
 import cn.dancingsnow.neoecoae.api.ECOTier;
 import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.storage.ECOStorageSystemBlockEntity;
-import cn.dancingsnow.neoecoae.impl.storage.infinite.ECOStorageHostMode;
 import cn.dancingsnow.neoecoae.multiblock.calculator.NEStorageClusterCalculator;
 import cn.dancingsnow.neoecoae.multiblock.cluster.NEStorageCluster;
 import com.sorrowmist.useless.compat.neoecoae.compact.ui.CompactUiHost;
@@ -317,9 +316,21 @@ public class CompactL9BlockEntity extends ECOStorageSystemBlockEntity
         }
         UUID domainId = tag.getUUID(DOMAIN_TAG);
         // Restoring an item reference does not create the native engine's backing domain.
-        cn.dancingsnow.neoecoae.impl.storage.infinite.ECOInfiniteStorageDomains.acquire(level, domainId);
-        cn.dancingsnow.neoecoae.impl.storage.infinite.ECOInfiniteStorageDomains.release(level.getServer(), domainId);
-        tag.putString(MODE_TAG, ECOStorageHostMode.FORMED_INFINITE.id());
+        try {
+            Class<?> domains;
+            try {
+                domains = Class.forName("cn.dancingsnow.neoecoae.storage.infinite.ECOInfiniteStorageDomains");
+            } catch (ClassNotFoundException olderVersion) {
+                domains = Class.forName("cn.dancingsnow.neoecoae.impl.storage.infinite.ECOInfiniteStorageDomains");
+            }
+            domains.getMethod("acquire", ServerLevel.class, UUID.class).invoke(null, level, domainId);
+            domains.getMethod("release", net.minecraft.server.MinecraftServer.class, UUID.class)
+                    .invoke(null, level.getServer(), domainId);
+        } catch (ReflectiveOperationException failure) {
+            throw new IllegalStateException("Cannot initialize Neo ECO infinite storage domain " + domainId, failure);
+        }
+        // Serialized mode ID is stable across Neo ECO's package relocation.
+        tag.putString(MODE_TAG, "formed_infinite");
         carrier.setTag(tag);
         restoreInfiniteDomainFromItem(carrier);
     }

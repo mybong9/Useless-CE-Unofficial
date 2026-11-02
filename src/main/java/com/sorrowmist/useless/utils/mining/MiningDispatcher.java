@@ -29,6 +29,19 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @EventBusSubscriber
 public class MiningDispatcher {
+    private static final ThreadLocal<Boolean> STRUCTURE_PERMISSION_CHECK = ThreadLocal.withInitial(() -> false);
+
+    public static int checkStructureBreak(ServerPlayer player, BlockPos pos) {
+        boolean previous = STRUCTURE_PERMISSION_CHECK.get();
+        STRUCTURE_PERMISSION_CHECK.set(true);
+        try {
+            return net.minecraftforge.common.ForgeHooks.onBlockBreakEvent(player.serverLevel(),
+                    player.gameMode.getGameModeForPlayer(), player, pos);
+        } finally {
+            if (previous) STRUCTURE_PERMISSION_CHECK.set(true);
+            else STRUCTURE_PERMISSION_CHECK.remove();
+        }
+    }
     private static final java.util.Set<UUID> CREATIVE_CHAIN_ACTIVE = ConcurrentHashMap.newKeySet();
     private static final MiningStrategy DEFAULT_STRATEGY = new DefaultMiningStrategy();
     // 普通连锁挖掘
@@ -159,6 +172,7 @@ public class MiningDispatcher {
      * @param player 玩家
      */
     public static void dispatchBreak(BlockEvent.BreakEvent event, ItemStack item, Player player) {
+        if (STRUCTURE_PERMISSION_CHECK.get()) return;
         if (player.isCreative()) {
             PlayerMiningData data = getOrCreatePlayerData(player);
             if (data.isTabPressed() && !CREATIVE_CHAIN_ACTIVE.contains(player.getUUID())
