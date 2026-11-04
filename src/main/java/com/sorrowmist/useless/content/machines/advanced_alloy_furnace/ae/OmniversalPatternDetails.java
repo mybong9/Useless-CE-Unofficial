@@ -39,6 +39,7 @@ public final class OmniversalPatternDetails extends DynamicComponentPatternDetai
 
     private final OmniversalPatternData data;
     private final AdvancedAlloyFurnaceRecipe recipe;
+    private final java.util.Set<appeng.api.stacks.AEKey> returnedInputs;
 
     private OmniversalPatternDetails(Decoded decoded) {
         super(decoded.source, decoded.itemIdInputSlots,
@@ -50,6 +51,45 @@ public final class OmniversalPatternDetails extends DynamicComponentPatternDetai
                 decoded.level.registryAccess());
         this.data = decoded.data;
         this.recipe = decoded.entry.recipe();
+        var returned = new java.util.HashSet<appeng.api.stacks.AEKey>();
+        for(var input:super.getInputs()){
+            var options=input.getPossibleInputs();
+            if(input.getMultiplier()!=1 || options.length!=1 || options[0].amount()!=1)continue;
+            var key=options[0].what();
+            if(java.util.Arrays.stream(super.getOutputs()).anyMatch(output->output.amount()==1 && key.equals(output.what())))returned.add(key);
+        }
+        // A recipe must retain a real product; never turn a pure passthrough into an empty pattern.
+        if(java.util.Arrays.stream(super.getOutputs()).allMatch(output->returned.contains(output.what())))returned.clear();
+        this.returnedInputs=java.util.Set.copyOf(returned);
+    }
+
+    @Override public appeng.api.stacks.GenericStack[] getOutputs(){
+        return java.util.Arrays.stream(super.getOutputs()).filter(output->!returnedInputs.contains(output.what()))
+                .toArray(appeng.api.stacks.GenericStack[]::new);
+    }
+
+    @Override public IInput[] getInputs(){
+        IInput[] inputs=super.getInputs();
+        for(int i=0;i<inputs.length;i++){
+            IInput input=inputs[i];var possible=input.getPossibleInputs();
+            if(possible.length!=1 || !returnedInputs.contains(possible[0].what()))continue;
+            inputs[i]=new IInput(){
+                public appeng.api.stacks.GenericStack[] getPossibleInputs(){return input.getPossibleInputs();}
+                public long getMultiplier(){return input.getMultiplier();}
+                public boolean isValid(appeng.api.stacks.AEKey key,Level level){return input.isValid(key,level);}
+                public appeng.api.stacks.AEKey getRemainingKey(appeng.api.stacks.AEKey key){return input.isValid(key,null)?key:null;}
+            };
+        }
+        return inputs;
+    }
+
+    @Override public boolean isItemIdOutput(int slot){
+        int visible=0;
+        var outputs=super.getOutputs();
+        for(int i=0;i<outputs.length;i++)if(!returnedInputs.contains(outputs[i].what())){
+            if(visible++==slot)return super.isItemIdOutput(i);
+        }
+        return false;
     }
 
     public static OmniversalPatternDetails decode(AEItemKey definition, Level level) {
