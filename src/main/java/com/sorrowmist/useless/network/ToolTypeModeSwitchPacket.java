@@ -42,7 +42,7 @@ public record ToolTypeModeSwitchPacket(ToolTypeMode mode) implements CoreCustomP
             InteractionHand targetHand = entry.getValue();
 
             // 1. 创建新物品实例
-            ItemStack newStack = switch (msg.mode) {
+            ItemStack newStack = BeefToolVariants.isAddonStaff(targetItem) ? targetItem.copy() : switch (msg.mode) {
                 case NONE_MODE, WRENCH_MODE, SCREWDRIVER_MODE, MALLET_MODE, CROWBAR_MODE, HAMMER_MODE ->
                         BeefToolVariants.createForToolMode(targetItem, msg.mode);
                 case OMNITOOL_MODE -> {

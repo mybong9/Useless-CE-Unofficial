@@ -73,6 +73,8 @@ public class ModeWheelScreen extends Screen {
     /** 连锁等价组齿轮图标的边长（画在连锁挖掘模块按钮右端）。 */
     private static final int GEAR_SIZE = 34;
     private PressableAE2Button chainSettingsButton;
+    private BeefToolLayout.Group resizingGroup;
+    private int groupStartWidth,groupStartHeight;
     private boolean movingPanel;
     private double panelGrabX,panelGrabY;
     private boolean resizingPanel;
@@ -166,7 +168,7 @@ public class ModeWheelScreen extends Screen {
                 + (editing ? EDITOR_FOOTER_HEIGHT : NORMAL_FOOTER_HEIGHT);
         StaffUiPreferences.load();
         panelWidth = Mth.clamp(StaffUiPreferences.width > 0 ? StaffUiPreferences.width : Math.min(PANEL_MAX_WIDTH, desiredWidth),
-                Math.min(420, availableWidth), availableWidth);
+                Math.min(280, availableWidth), availableWidth);
         panelHeight = Mth.clamp(StaffUiPreferences.height > 0 ? StaffUiPreferences.height : Math.min(DESIGN_HEIGHT, desiredHeight),
                 Math.min(170, availableHeight), availableHeight);
         panelLeft = resizeLeft < 0 ? (uiWidth - panelWidth) / 2
@@ -244,7 +246,9 @@ public class ModeWheelScreen extends Screen {
         return new int[]{left, right};
     }
 
+    private String groupSizeKey(BeefToolLayout.Group group){return currentPageObject().name()+"/"+group.name();}
     private int naturalGroupWidth(BeefToolLayout.Group group) {
+        int[] saved=StaffUiPreferences.groups.get(groupSizeKey(group));if(saved!=null)return saved[0];
         List<String> modules = visibleModules(group.modules());
         int titleWidth = font == null ? 80 : font.width(group.name()) + 30;
         if (modules.isEmpty()) return Math.max(100, titleWidth);
@@ -450,8 +454,10 @@ public class ModeWheelScreen extends Screen {
             List<String> visibleModules = visibleModules(group.modules());
             int column = columnBottoms[0] <= columnBottoms[1] ? 0 : 1;
             int left = contentLeft + (column == 0 ? 0 : columnWidths[0] + CARD_GAP);
-            int cardWidth = columnWidths[column];
+            int cardWidth = Math.min(columnWidths[column],naturalGroupWidth(group));
             int height = cardHeight(cardWidth, visibleModules.size(), moduleColumns(visibleModules.size()));
+            int[] size=StaffUiPreferences.groups.get(groupSizeKey(group));
+            if(size!=null)height=Math.max(height,size[1]);
             int top = columnBottoms[column];
             rawCards.add(new RawCard(currentPage(), groupIndex, left, top,
                     cardWidth, height, false, visibleModules));
@@ -489,19 +495,21 @@ public class ModeWheelScreen extends Screen {
     }
 
     private int cardHeight(int width, int moduleCount, int columns) {
+        if(width<150)columns=1;
         int rows = Math.max(1, (moduleCount + columns - 1) / columns);
         return CARD_HEADER_HEIGHT + rows * MODULE_HEIGHT
                 + Math.max(0, rows - 1) * MODULE_GAP + CARD_BOTTOM_PADDING;
     }
 
     private Rect moduleRect(CardLayout card, int index) {
-        int columns = moduleColumns(card.modules().size());
+        int columns = card.width()<150?1:moduleColumns(card.modules().size());
         List<String> sourceModules = card.unassigned()
                 ? layout.unassignedModules()
                 : groupAt(card.pageIndex(), card.groupIndex()).modules();
         int buttonWidth = visibleModules(sourceModules).size() == 1
                 ? moduleButtonWidth(sourceModules)
                 : commonModuleWidth(currentPageObject());
+        buttonWidth=Math.max(1,(card.width()-10-(columns-1)*MODULE_GAP)/columns);
         int column = index % columns;
         int row = index / columns;
         return new Rect(card.left() + 5 + column * (buttonWidth + MODULE_GAP),
@@ -1166,6 +1174,8 @@ public class ModeWheelScreen extends Screen {
             }
             graphics.pose().pushPose();
             graphics.pose().translate(point[0]-card.left(),point[1]-card.top(),0);
+            if(editing && !card.unassigned())for(int i=0;i<3;i++)
+                graphics.fill(card.right()-4-i*3,card.top()+card.height()-3,card.right()-3-i*3,card.top()+card.height()-4-i*3,mutedColor());
             drawInset(graphics, card.left(), card.top(),
                     card.left() + card.width(), card.top() + card.height());
             if (card.unassigned()) {
@@ -1329,6 +1339,9 @@ public class ModeWheelScreen extends Screen {
         if (button == 0 && mouseY >= panelTop && mouseY < panelTop + 20 && mouseX >= panelLeft && mouseX < panelLeft + Math.min(120,panelWidth/3)) {
             movingPanel=true;panelGrabX=mouseX-panelLeft;panelGrabY=mouseY-panelTop;setFocused(null);return true;
         }
+        if(editing && button==0)for(var card:cardLayouts){if(!card.unassigned() && new Rect(card.right()-12,card.top()+card.height()-12,12,12).contains(mouseX,mouseY)){
+            resizingGroup=groupAt(card.pageIndex(),card.groupIndex());groupStartWidth=card.width();groupStartHeight=card.height();resizeStartX=mouseX;resizeStartY=mouseY;commitNameFields();return true;
+        }}
         if (awaitingLayout) return true;
 
         // 连锁挖掘模块右端的齿轮：进入「连锁等价组」编辑子界面。
@@ -1381,12 +1394,13 @@ public class ModeWheelScreen extends Screen {
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
+        if(resizingGroup!=null && button==0){StaffUiPreferences.groups.put(groupSizeKey(resizingGroup),new int[]{Mth.clamp(groupStartWidth+(int)(mouseX-resizeStartX),100,Math.max(100,(contentRight-contentLeft-CARD_GAP)/2)),Mth.clamp(groupStartHeight+(int)(mouseY-resizeStartY),40,1600)});rebuildWidgets();return true;}
         dragX /= uiScale;
         dragY /= uiScale;
         if(movingPanel && button==0){resizeLeft=(int)(mouseX-panelGrabX);resizeTop=(int)(mouseY-panelGrabY);rebuildWidgets();return true;}
         if (resizingPanel && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             StaffUiPreferences.width = Mth.clamp(resizeStartWidth + (int) Math.round(mouseX - resizeStartX),
-                    Math.min(420, uiWidth - PANEL_MARGIN * 2), Math.max(1, uiWidth - resizeLeft - PANEL_MARGIN));
+                    Math.min(280, uiWidth - PANEL_MARGIN * 2), Math.max(1, uiWidth - resizeLeft - PANEL_MARGIN));
             StaffUiPreferences.height = Mth.clamp(resizeStartHeight + (int) Math.round(mouseY - resizeStartY),
                     Math.min(170, uiHeight - PANEL_MARGIN * 2), Math.max(1, uiHeight - resizeTop - PANEL_MARGIN));
             rebuildWidgets();
@@ -1430,6 +1444,7 @@ public class ModeWheelScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if(resizingGroup!=null && button==0){resizingGroup=null;StaffUiPreferences.save();return true;}
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
         if(movingPanel && button==0){movingPanel=false;return true;}

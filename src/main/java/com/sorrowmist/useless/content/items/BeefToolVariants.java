@@ -54,7 +54,7 @@ public final class BeefToolVariants {
     }
 
     public static ItemStack withWrenchTag(ItemStack source, boolean enabled) {
-        ItemStack result = new ItemStack(
+        ItemStack result = isAddonStaff(source) ? source.copy() : new ItemStack(
                 enabled ? ModItems.ENDLESS_BEAF_ITEM.get() : ModItems.ENDLESS_BEAF_ITEM_NO_WRENCH.get());
         com.sorrowmist.uselesscore.api.component.CoreItemStackData.copyData(source, result);
         CoreItemComponents.set(result, UselessComponents.WrenchTagEnabledComponent.get(), enabled);
@@ -63,7 +63,7 @@ public final class BeefToolVariants {
     }
 
     public static ItemStack createForToolMode(ItemStack source, ToolTypeMode mode) {
-        ItemStack result = switch (mode) {
+        ItemStack result = isAddonStaff(source) ? source.copy() : switch (mode) {
             case NONE_MODE -> withWrenchTag(source, isWrenchTagEnabled(source));
             case WRENCH_MODE -> new ItemStack(ModItems.ENDLESS_BEAF_WRENCH.get());
             case SCREWDRIVER_MODE -> new ItemStack(ModItems.ENDLESS_BEAF_SCREWDRIVER.get());
@@ -77,5 +77,9 @@ public final class BeefToolVariants {
             CoreItemComponents.set(result, UselessComponents.CurrentToolTypeComponent.get(), mode);
         }
         return result;
+    }
+
+    public static boolean isAddonStaff(ItemStack stack) {
+        return isBeafTool(stack) && !BuiltInRegistries.ITEM.getKey(stack.getItem()).getNamespace().equals("useless_mod");
     }
 }
