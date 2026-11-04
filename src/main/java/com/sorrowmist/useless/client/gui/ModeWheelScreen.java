@@ -73,6 +73,8 @@ public class ModeWheelScreen extends Screen {
     /** 连锁等价组齿轮图标的边长（画在连锁挖掘模块按钮右端）。 */
     private static final int GEAR_SIZE = 34;
     private PressableAE2Button chainSettingsButton;
+    private boolean movingPanel;
+    private double panelGrabX,panelGrabY;
     private boolean resizingPanel;
     private double resizeStartX, resizeStartY;
     private int resizeStartWidth, resizeStartHeight, resizeLeft = -1, resizeTop = -1;
@@ -92,6 +94,14 @@ public class ModeWheelScreen extends Screen {
     private BeefToolLayout layout = BeefToolModuleRegistry.defaultLayout();
     private EditBox pageNameField;
     private DragState drag;
+    private final java.util.Map<BeefToolLayout.Group,float[]> animatedGroups = new java.util.IdentityHashMap<>();
+    private float[] visual(CardLayout card) {
+        BeefToolLayout.Group group=groupAt(card.pageIndex(),card.groupIndex());
+        if(group==null)return new float[]{card.left(),card.top()};
+        float[] point=animatedGroups.computeIfAbsent(group,k->new float[]{card.left(),card.top()});
+        point[0]+=(card.left()-point[0])*.3f;point[1]+=(card.top()-point[1])*.3f;
+        return point;
+    }
     private String lastAvailabilitySignature = "";
     private String statusKey;
     private int statusTicks;
@@ -1150,6 +1160,12 @@ public class ModeWheelScreen extends Screen {
     private void drawCards(GuiGraphics graphics, int mouseX, int mouseY) {
         for (CardLayout card : cardLayouts) {
             if (!intersectsContent(card.rect())) continue;
+            float[] point=visual(card);
+            for(var field:groupNameFields)if(field.pageIndex()==card.pageIndex() && field.groupIndex()==card.groupIndex()){
+                field.field().setX((int)point[0]+10);field.field().setY((int)point[1]+2);
+            }
+            graphics.pose().pushPose();
+            graphics.pose().translate(point[0]-card.left(),point[1]-card.top(),0);
             drawInset(graphics, card.left(), card.top(),
                     card.left() + card.width(), card.top() + card.height());
             if (card.unassigned()) {
@@ -1172,12 +1188,19 @@ public class ModeWheelScreen extends Screen {
                         card.left() + 6, card.top() + CARD_HEADER_HEIGHT + 4,
                         mutedColor(), false);
             }
+            graphics.pose().popPose();
         }
     }
 
     private void drawEditorModules(GuiGraphics graphics, int mouseX, int mouseY) {
         for (ModuleLayout module : moduleLayouts) {
             if (!intersectsContent(module.rect())) continue;
+            graphics.pose().pushPose();
+            for(CardLayout card:cardLayouts)if(card.pageIndex()==module.pageIndex() && card.groupIndex()==module.groupIndex() && !card.unassigned()){
+                var point=animatedGroups.get(groupAt(card.pageIndex(),card.groupIndex()));
+                if(point!=null)graphics.pose().translate(point[0]-card.left(),point[1]-card.top(),0);
+                break;
+            }
             boolean hovered = module.rect().contains(mouseX, mouseY);
             StaffGlass.button(graphics, module.rect().left(), module.rect().top(),
                     module.rect().width(), module.rect().height(), true, hovered, false);
@@ -1186,8 +1209,18 @@ public class ModeWheelScreen extends Screen {
             int textColor = hovered ? textColor() : subtleColor();
             graphics.drawString(font, text, module.rect().left() + 3,
                     module.rect().top() + 5, textColor, false);
+            graphics.pose().popPose();
         }
         if (drag != null && drag.moved) {
+            if(drag.kind==DragKind.GROUP){
+                int left=(int)drag.mouseX-80,top=(int)drag.mouseY-12;
+                var modules=visibleModules(drag.group.modules());
+                drawInset(graphics,left,top,left+170,top+26+modules.size()*24);
+                graphics.drawString(font,drag.group.name(),left+6,top+5,textColor(),false);
+                for(int i=0;i<modules.size();i++)drawManualButton(graphics,left+5,top+24+i*24,160,20,
+                    buttonMessage(modules.get(i)),new Rect(left+5,top+24+i*24,160,20),mouseX,mouseY);
+                return;
+            }
             String text = drag.kind == DragKind.MODULE
                     ? buttonMessage(drag.moduleId).getString()
                     : drag.kind == DragKind.GROUP ? drag.group.name() : drag.page.name();
@@ -1293,6 +1326,9 @@ public class ModeWheelScreen extends Screen {
             setFocused(null);
             return true;
         }
+        if (button == 0 && mouseY >= panelTop && mouseY < panelTop + 20 && mouseX >= panelLeft && mouseX < panelLeft + Math.min(120,panelWidth/3)) {
+            movingPanel=true;panelGrabX=mouseX-panelLeft;panelGrabY=mouseY-panelTop;setFocused(null);return true;
+        }
         if (awaitingLayout) return true;
 
         // 连锁挖掘模块右端的齿轮：进入「连锁等价组」编辑子界面。
@@ -1347,6 +1383,7 @@ public class ModeWheelScreen extends Screen {
         mouseY = toUiY(mouseY);
         dragX /= uiScale;
         dragY /= uiScale;
+        if(movingPanel && button==0){resizeLeft=(int)(mouseX-panelGrabX);resizeTop=(int)(mouseY-panelGrabY);rebuildWidgets();return true;}
         if (resizingPanel && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             StaffUiPreferences.width = Mth.clamp(resizeStartWidth + (int) Math.round(mouseX - resizeStartX),
                     Math.min(420, uiWidth - PANEL_MARGIN * 2), Math.max(1, uiWidth - resizeLeft - PANEL_MARGIN));
@@ -1364,6 +1401,14 @@ public class ModeWheelScreen extends Screen {
             drag.moved = true;
         }
         if (!drag.moved) return true;
+
+        if(drag.kind==DragKind.GROUP){
+            CardLayout target=groupAt(mouseX,mouseY);
+            if(target!=null && groupAt(target.pageIndex(),target.groupIndex())!=drag.group){
+                DragState saved=drag;
+                if(dropGroup(saved.group,mouseX,mouseY)){rebuildWidgets();drag=saved;}
+            }
+        }
 
         if (drag.kind != DragKind.PAGE) {
             int page = pageAt(mouseX, mouseY);
@@ -1387,9 +1432,11 @@ public class ModeWheelScreen extends Screen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
+        if(movingPanel && button==0){movingPanel=false;return true;}
         if (resizingPanel && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             resizingPanel = false; StaffUiPreferences.save(); return true;
         }
+        if(movingPanel && button==0){movingPanel=false;return true;}
         for (PressableAE2Button toolbarButton : toolbarButtons) toolbarButton.releaseVisualState();
         for (ModeButton modeButton : modeButtons) modeButton.button().releaseVisualState();
         if (drag != null && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
@@ -1403,7 +1450,7 @@ public class ModeWheelScreen extends Screen {
                 }
                 return true;
             }
-            if (drop(released, mouseX, mouseY)) {
+            if (drop(released, mouseX, mouseY) || released.kind==DragKind.GROUP) {
                 sendLayout();
                 rebuildWidgets();
             }
@@ -1676,7 +1723,7 @@ public class ModeWheelScreen extends Screen {
     private CardLayout groupHandleAt(double mouseX, double mouseY) {
         for (CardLayout card : cardLayouts) {
             if (!card.unassigned() && card.rect().contains(mouseX, mouseY)
-                    && mouseX <= card.left() + 10 && mouseY <= card.top() + CARD_HEADER_HEIGHT) return card;
+                    && (mouseX <= card.left() + 18 || mouseX >= card.right()-3 || mouseY >= card.top()+card.height()-4)) return card;
         }
         return null;
     }

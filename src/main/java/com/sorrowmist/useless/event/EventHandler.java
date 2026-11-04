@@ -192,22 +192,6 @@ public class EventHandler {
         }
     }
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
-    public static void onStaffFortuneBlockDrops(com.sorrowmist.uselesscore.api.event.CoreBlockDropsEvent event) {
-        if (!com.sorrowmist.useless.utils.StaffFortuneDrops.enabled(event.getTool())
-                || event.getBlockEntity() != null) return;
-        var amplified = new java.util.ArrayList<net.minecraft.world.entity.item.ItemEntity>();
-        for (var entity : event.getDrops()) {
-            for (var stack : com.sorrowmist.useless.utils.StaffFortuneDrops.affectsBlockDrop(event, entity.getItem())
-                    ? com.sorrowmist.useless.utils.StaffFortuneDrops.amplify(entity.getItem())
-                    : java.util.List.of(entity.getItem())) {
-                amplified.add(new net.minecraft.world.entity.item.ItemEntity(event.getLevel(),
-                        entity.getX(), entity.getY(), entity.getZ(), stack));
-            }
-        }
-        event.getDrops().clear();
-        event.getDrops().addAll(amplified);
-    }
 
     /**
      * 造化杖的方块破坏入口。

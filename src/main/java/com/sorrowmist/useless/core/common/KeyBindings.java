@@ -55,6 +55,7 @@ public class KeyBindings {
             GLFW.GLFW_KEY_G,
             CATEGORY
     ));
+    public static final Lazy<KeyMapping> GT_TOOL_WHEEL_KEY = Lazy.of(() -> new KeyMapping("key.useless_mod.gt_tool_wheel", KeyConflictContext.IN_GAME, InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_G, CATEGORY));
     // 强制挖掘功能
     private static final String SWITCH_FORCE_MINING = "key.useless_mod.force_mining";
     public static final Lazy<KeyMapping> SWITCH_FORCE_MINING_KEY = Lazy.of(() -> new KeyMapping(

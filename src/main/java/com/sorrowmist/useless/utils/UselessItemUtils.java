@@ -133,17 +133,6 @@ public class UselessItemUtils {
     public static void onLivingDrops(LivingDropsEvent event, ItemStack stack, Player player) {
         if (player == null) return;
 
-        if (StaffFortuneDrops.enabled(stack)) {
-            if (event.isCanceled() || event.getEntity().level().isClientSide()
-                    || event.getEntity() instanceof Player) return;
-            List<ItemStack> amplified = new ArrayList<>();
-            for (ItemEntity drop : event.getDrops()) {
-                amplified.addAll(StaffFortuneDrops.amplify(drop.getItem()));
-            }
-            event.getDrops().clear();
-            MiningUtils.handleDrops(player, amplified, stack, event.getEntity().position());
-            return;
-        }
 
         // 根据配置的概率判断是否触发
         int chance = ConfigManager.getFestiveDropChance();

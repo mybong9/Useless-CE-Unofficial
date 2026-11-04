@@ -91,6 +91,7 @@ public class ClientEventBusSubscriber {
 
         // UI
         event.register(KeyBindings.SWITCH_MODE_WHEEL_KEY.get());
+        event.register(KeyBindings.GT_TOOL_WHEEL_KEY.get());
         event.register(KeyBindings.OPEN_WIRELESS_LOGISTICS_KEY.get());
     }
 
