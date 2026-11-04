@@ -2,7 +2,7 @@
 
 This is an **unofficial Forge 1.20.1 port/community edition**, not an official upstream release.
 
-Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`, current source version **1.4.4**.
+Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 
 本仓库为该模组的独立源码仓库。请查看 [构建说明 / Building](BUILDING.md)
 了解四个仓库的联合构建方式；发布更新记录见 [CHANGELOG.md](CHANGELOG.md)。
