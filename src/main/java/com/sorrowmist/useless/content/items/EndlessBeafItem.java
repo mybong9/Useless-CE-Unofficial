@@ -583,12 +583,13 @@ public class EndlessBeafItem extends TieredItem {
         }
 
         // 根据工具类型返回特定能力
-        if (this.toolType == null) {
+        ToolTypeMode selectedTool = CoreItemComponents.getOrDefault(stack, UselessComponents.CurrentToolTypeComponent.get(), this.toolType == null ? ToolTypeMode.NONE_MODE : this.toolType);
+        if (selectedTool == null) {
             return false;
         }
 
         // GT部分适配
-        return switch (this.toolType) {
+        return switch (selectedTool) {
             case NONE_MODE, OMNITOOL_MODE -> false;
             case WRENCH_MODE -> ability == ToolAction.get("wrench_rotate") ||
                     ability == ToolAction.get("wrench_configure") ||

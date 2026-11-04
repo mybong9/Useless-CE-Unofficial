@@ -984,7 +984,7 @@ public class ModeWheelScreen extends Screen {
             case BeefToolModuleRegistry.ENCHANT_FORTUNE ->
                     ModNetwork.CHANNEL.sendToServer(new EnchantmentSwitchPacket(EnchantMode.FORTUNE));
             case BeefToolModuleRegistry.TOOL_NONE -> sendToolType(ToolTypeMode.NONE_MODE);
-            case BeefToolModuleRegistry.TOOL_WRENCH -> sendToolType(ToolTypeMode.WRENCH_MODE);
+            case BeefToolModuleRegistry.TOOL_WRENCH -> sendToolType(currentTool()==ToolTypeMode.WRENCH_MODE?ToolTypeMode.NONE_MODE:ToolTypeMode.WRENCH_MODE);
             case BeefToolModuleRegistry.TOOL_SCREWDRIVER -> sendToolType(ToolTypeMode.SCREWDRIVER_MODE);
             case BeefToolModuleRegistry.TOOL_MALLET -> sendToolType(ToolTypeMode.MALLET_MODE);
             case BeefToolModuleRegistry.TOOL_CROWBAR -> sendToolType(ToolTypeMode.CROWBAR_MODE);

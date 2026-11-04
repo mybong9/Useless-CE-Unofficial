@@ -3,6 +3,7 @@
   "package": "com.sorrowmist.useless.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
+    "StaffWrenchTagMixin",
     "gtceu.FurnaceHatchFormedMixin",
     "gtceu.StaffToolTypesMixin",
     "tconstruct.TinkerHarvestMixin",

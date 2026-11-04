@@ -69,8 +69,8 @@ public final class BeefToolModuleRegistry {
                     Availability.ALWAYS, true),
             new Definition(TOOL_NONE, ToolTypeMode.NONE_MODE.getTooltip(), GroupKind.GREGTECH,
                     Availability.GREGTECH, true),
-            new Definition(TOOL_WRENCH, ToolTypeMode.WRENCH_MODE.getTooltip(), GroupKind.GREGTECH,
-                    Availability.GREGTECH, true),
+            new Definition(TOOL_WRENCH, ToolTypeMode.WRENCH_MODE.getTooltip(), GroupKind.TOOLS,
+                    Availability.ALWAYS, true),
             new Definition(TOOL_SCREWDRIVER, ToolTypeMode.SCREWDRIVER_MODE.getTooltip(), GroupKind.GREGTECH,
                     Availability.GREGTECH, true),
             new Definition(TOOL_MALLET, ToolTypeMode.MALLET_MODE.getTooltip(), GroupKind.GREGTECH,
@@ -214,7 +214,7 @@ public final class BeefToolModuleRegistry {
 
     public static boolean isAvailable(String id, ItemStack target) {
         Definition definition = get(id);
-        return definition != null && definition.availability().isAvailable(target);
+        return !WRENCH_TAG.equals(id) && definition != null && definition.availability().isAvailable(target);
     }
 
     public static Component name(String id) {
@@ -273,7 +273,10 @@ public final class BeefToolModuleRegistry {
         addMissingModules(layout, target, AUTO_VANILLA_MODULES, GroupKind.VANILLA);
         addMissingModules(layout, target, AUTO_MINING_MODULES, GroupKind.MINING);
         addMissingModules(layout, target, AUTO_EXDEORUM_MODULES, GroupKind.EXDEORUM);
-        addMissingModules(layout, target, List.of(TOOL_NONE, TOOL_WRENCH, TOOL_SCREWDRIVER,
+        for(var page:layout.pages())for(var group:page.groups()){group.modules().remove(WRENCH_TAG);if(groupKindOf(group)==GroupKind.GREGTECH)group.modules().remove(TOOL_WRENCH);}
+        layout.unassignedModules().remove(WRENCH_TAG);layout.unassignedModules().remove(TOOL_WRENCH);
+        addMissingModules(layout,target,List.of(TOOL_WRENCH),GroupKind.TOOLS);
+        addMissingModules(layout, target, List.of(TOOL_NONE, TOOL_SCREWDRIVER,
                 TOOL_MALLET, TOOL_CROWBAR, TOOL_HAMMER), GroupKind.GREGTECH);
     }
 
