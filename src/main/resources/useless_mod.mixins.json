@@ -5,6 +5,7 @@
   "mixins": [
     "StaffWrenchTagMixin",
     "gtceu.FurnaceHatchFormedMixin",
+    "gtceu.FurnaceCreativeResearchMixin",
     "gtceu.StaffToolTypesMixin",
     "tconstruct.TinkerHarvestMixin",
     "ftbultimine.OwnedChainMiningMixin",

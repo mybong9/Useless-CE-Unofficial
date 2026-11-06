@@ -101,6 +101,7 @@ public class ModeWheelScreen extends Screen {
         BeefToolLayout.Group group=groupAt(card.pageIndex(),card.groupIndex());
         if(group==null)return new float[]{card.left(),card.top()};
         float[] point=animatedGroups.computeIfAbsent(group,k->new float[]{card.left(),card.top()});
+        if(!editing){point[0]=card.left();point[1]=card.top();return point;}
         point[0]+=(card.left()-point[0])*.3f;point[1]+=(card.top()-point[1])*.3f;
         return point;
     }
@@ -115,6 +116,8 @@ public class ModeWheelScreen extends Screen {
     private int pageTabOffset;
     private int scrollOffset;
     private int maxScroll;
+    private boolean draggingScrollbar;
+    private double scrollbarGrab;
     private int contentLeft;
     private int contentTop;
     private int contentRight;
@@ -177,7 +180,7 @@ public class ModeWheelScreen extends Screen {
                 : Mth.clamp(resizeTop, PANEL_MARGIN, Math.max(PANEL_MARGIN, uiHeight - panelHeight - PANEL_MARGIN));
 
         contentLeft = panelLeft + PANEL_MARGIN;
-        contentRight = panelLeft + panelWidth - PANEL_MARGIN;
+        contentRight = panelLeft + panelWidth - PANEL_MARGIN - 10;
         contentTop = panelTop + HEADER_HEIGHT;
         int footerHeight = editing ? EDITOR_FOOTER_HEIGHT : NORMAL_FOOTER_HEIGHT;
         contentBottom = Math.max(contentTop + 1, panelTop + panelHeight - footerHeight);
@@ -1137,6 +1140,7 @@ public class ModeWheelScreen extends Screen {
             }
         }
 
+        drawScrollbar(graphics);
         drawChainGroupGearTooltip(graphics, mouseX, mouseY);
         drawModeButtonTooltips(graphics, mouseX, mouseY);
 
@@ -1312,6 +1316,12 @@ public class ModeWheelScreen extends Screen {
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
+        if(!confirmImport&&!awaitingLayout&&button==0&&maxScroll>0
+                &&mouseX>=contentRight+2&&mouseX<=contentRight+10&&mouseY>=contentTop&&mouseY<=contentBottom){
+            int thumb=scrollbarHeight(),top=scrollbarTop();
+            scrollbarGrab=mouseY>=top&&mouseY<=top+thumb?mouseY-top:thumb/2.;
+            draggingScrollbar=true;setFocused(null);scrollbarTo(mouseY);return true;
+        }
         if (confirmImport) {
             int modalWidth = Math.min(320, uiWidth - 12);
             int modalHeight = 82;
@@ -1394,6 +1404,7 @@ public class ModeWheelScreen extends Screen {
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
+        if(draggingScrollbar&&button==0){scrollbarTo(mouseY);return true;}
         if(resizingGroup!=null && button==0){StaffUiPreferences.groups.put(groupSizeKey(resizingGroup),new int[]{Mth.clamp(groupStartWidth+(int)(mouseX-resizeStartX),100,Math.max(100,(contentRight-contentLeft-CARD_GAP)/2)),Mth.clamp(groupStartHeight+(int)(mouseY-resizeStartY),40,1600)});rebuildWidgets();return true;}
         dragX /= uiScale;
         dragY /= uiScale;
@@ -1444,6 +1455,7 @@ public class ModeWheelScreen extends Screen {
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if(draggingScrollbar&&button==0){draggingScrollbar=false;return true;}
         if(resizingGroup!=null && button==0){resizingGroup=null;StaffUiPreferences.save();return true;}
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
@@ -1479,7 +1491,7 @@ public class ModeWheelScreen extends Screen {
         mouseX = toUiX(mouseX);
         mouseY = toUiY(mouseY);
         if (confirmImport || awaitingLayout) return true;
-        if (mouseY >= contentTop && mouseY <= contentBottom) {
+        if (mouseX>=contentLeft&&mouseX<=contentRight+10&&mouseY >= contentTop && mouseY <= contentBottom) {
             int next = Mth.clamp(scrollOffset - (int) Math.round(deltaY * 18), 0, maxScroll);
             if (next != scrollOffset) {
                 scrollOffset = next;
@@ -1520,9 +1532,30 @@ public class ModeWheelScreen extends Screen {
     }
 
     private void updateGeometryAfterScroll() {
+        // Scroll moves cards and their controls together; only reordering uses the group animation.
+        animatedGroups.clear();
         calculateGeometry();
         positionModeButtons();
         updateEditorFieldPositions();
+    }
+
+    private int scrollbarHeight(){
+        int height=contentBottom-contentTop;
+        return Math.min(height,Math.max(20,(int)((long)height*height/(height+(long)maxScroll))));
+    }
+    private int scrollbarTop(){
+        return contentTop+(maxScroll==0?0:(int)((long)scrollOffset*(contentBottom-contentTop-scrollbarHeight())/maxScroll));
+    }
+    private void scrollbarTo(double mouseY){
+        int travel=contentBottom-contentTop-scrollbarHeight();
+        int next=travel<=0?0:Mth.clamp((int)Math.round((mouseY-contentTop-scrollbarGrab)*maxScroll/travel),0,maxScroll);
+        if(next!=scrollOffset){scrollOffset=next;updateGeometryAfterScroll();}
+    }
+    private void drawScrollbar(GuiGraphics graphics){
+        if(maxScroll<=0||awaitingLayout)return;
+        int left=contentRight+3,top=scrollbarTop();
+        graphics.fill(left,contentTop,left+5,contentBottom,0x55303c48);
+        graphics.fill(left,top,left+5,top+scrollbarHeight(),draggingScrollbar?0xff51b7eb:0xbb92a9bd);
     }
 
     private boolean drop(DragState released, double mouseX, double mouseY) {

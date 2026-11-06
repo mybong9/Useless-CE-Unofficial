@@ -402,6 +402,7 @@ public final class OmniversalFurnaceAutoBuilder {
         var linked = com.sorrowmist.uselesscore.api.ae.CoreLinkedGrid.resolve(tool, player);
         if (linked != null) return linked;
         if (player.level().getBlockEntity(pos) instanceof MultiblockAlloyFurnaceCoreBlockEntity core
+                && core.getMainNode() != null
                 && core.getMainNode().isOnline() && core.getMainNode().getGrid() != null) {
             return new com.sorrowmist.uselesscore.api.ae.CoreLinkedGrid.Access(core.getMainNode().getGrid(),
                     appeng.api.networking.security.IActionSource.ofPlayer(player));

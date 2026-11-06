@@ -1462,5 +1462,8 @@
   "useless_mod.configuration.enable_woot_recipe_conversion": "启用 Woot Revived 配方转换",
   "useless_mod.configuration.enable_woot_recipe_conversion.comment": "接入 Woot 加工与基础怪物工厂产物；普通书可制作 20 B 附魔流体，不接入附魔书提取。修改后重新进入世界。",
   "useless_mod.configuration.enable_woot_recipe_conversion.tooltip": "接入 Woot 加工与基础怪物工厂产物；普通书可制作 20 B 附魔流体，不接入附魔书提取。修改后重新进入世界。",
-  "key.useless_mod.gt_tool_wheel": "GT 工具轮盘（长按）"
+  "key.useless_mod.gt_tool_wheel": "GT 工具轮盘（长按）",
+  "jei.useless_mod.structure.gt_hatches": "GT 可替换：输入能源仓、激光仓、数据仓、光学数据接收仓、算力接收仓及维护仓",
+  "jei.useless_mod.structure.gt_hatches_rules": "可放在外壳或底层接口位置；GTMThings 能源仓也支持。样板阁和模具藏阁仍各需至少1个。",
+  "gui.useless_mod.gt_wheel.title": "GT 工具"
 }

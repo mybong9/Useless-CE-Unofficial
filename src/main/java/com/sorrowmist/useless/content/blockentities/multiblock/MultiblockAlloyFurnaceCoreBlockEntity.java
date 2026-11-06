@@ -178,6 +178,7 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
         for (var assembly : getAssemblies()) assembly.refreshProviderIfReady();
         boolean progressed = false;
         if (isTaskExecutionEnabled()) {
+            com.sorrowmist.useless.compat.gtceu.GregTechFurnacePower.tick(this);
             drawEnergyFromAeNetwork();
             aeManager.flushAEBatches();
             progressed = aeManager.tickAETasks();

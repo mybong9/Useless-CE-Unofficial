@@ -17,48 +17,46 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 <!-- runtime-dependencies:start -->
 ## 运行环境与依赖版本
 
-对应发布版本：**1.4.4**。本工程目标为 **Minecraft 1.20.1 / Forge**，使用 **Java 17+**（编译目标为 Java 17）。
-以下依赖范围直接依据该版本发布 JAR 的 `META-INF/mods.toml`，不是编译时所用依赖版本。
+对应发布版本：**1.4.10**。Minecraft **1.20.1 / Forge**，Java **17+**。
+以下范围依据发布 JAR 的加载声明，其他模组仍需满足各自前置要求。
 
 ### 必需前置
 
-| 依赖 | Mod ID | 最低版本 / 加载范围 | 适用端 |
-| --- | --- | --- | --- |
-| Minecraft Forge | `forge` | 47 或更高 | 客户端、服务端 |
-| [Useless Core](https://github.com/mybong9/Useless-Core) | `useless_core` | 1.0.14 或更高| 客户端、服务端 |
-| Minecraft | `minecraft` | 1.20.1 | 客户端、服务端 |
-| Applied Energistics 2（AE2） | `ae2` | 15.0.0 或更高 | 客户端、服务端 |
+| Mod ID | 版本范围 | 适用端 |
+| --- | --- | --- |
+| `forge` | `[47,)` | 客户端、服务端 |
+| `useless_core` | `[1.0.14,)` | 客户端、服务端 |
+| `minecraft` | `[1.20.1,)` | 客户端、服务端 |
+| `ae2` | `[15.0.0,)` | 客户端、服务端 |
 
 ### 可选联动
 
-| 依赖 | Mod ID | 最低版本 / 加载范围 | 适用端 |
-| --- | --- | --- | --- |
-| Just Enough Items（JEI） | `jei` | 15.12.3 或更高 | 仅客户端 |
-| Roughly Enough Items（REI） | `roughlyenoughitems` | 12.0.0 或更高| 仅客户端 |
-| Mekanism | `mekanism` | 10.4.0 或更高 | 客户端、服务端 |
-| Curios API | `curios` | 5.0.0 或更高 | 客户端、服务端 |
-| GeckoLib | `geckolib` | 4.0.0 或更高 | 客户端、服务端 |
-| Thermal Series / Foundation | `thermal` | 11.0.0 或更高 | 客户端、服务端 |
-| CoFH Core | `cofh_core` | 11.0.0 或更高| 客户端、服务端 |
-| EMI | `emi` | 1.0.0 或更高 | 客户端、服务端 |
-| AdvancedAE | `advancedae` | 1.0.0 或更高 | 客户端、服务端 |
-| ExtendedAE | `expatternprovider` | 1.0.0 或更高 | 客户端、服务端 |
-| Woot Revived | `woot_revived` | 未限定最低版本（对照 20.1.1.9） | 客户端、服务端 |
-| GregTech CEu Modern（GTM） | `gtceu` | 未限定最低版本 | 客户端、服务端 |
-| HNN | `hostilenetworks` | 未限定最低版本 | 客户端、服务端 |
-| EHNN | `extrahnn` | 未限定最低版本 | 客户端、服务端 |
-| Productive Bees（资源蜜蜂） | `productivebees` | 未限定最低版本 | 客户端、服务端 |
-| NuclearCraft | `nuclearcraft` | 未限定最低版本 | 客户端、服务端 |
-| Blood Magic Additions（血魔法附加） | `bmaddon` | 未限定最低版本 | 客户端、服务端 |
-| NeoECOAEExtension | `neoecoae` | 20.5.1 或更高| 客户端、服务端 |
+| Mod ID | 版本范围 | 适用端 |
+| --- | --- | --- |
+| `jei` | `[15.12.3,)` | 仅客户端 |
+| `roughlyenoughitems` | `[12.0.0,)` | 仅客户端 |
+| `mekanism` | `[10.4.0,)` | 客户端、服务端 |
+| `curios` | `[5.0.0,)` | 客户端、服务端 |
+| `geckolib` | `[4.0.0,)` | 客户端、服务端 |
+| `thermal` | `[11.0.0,)` | 客户端、服务端 |
+| `cofh_core` | `[11.0.0,)` | 客户端、服务端 |
+| `emi` | `[1.0.0,)` | 客户端、服务端 |
+| `advancedae` | `[1.0.0,)` | 客户端、服务端 |
+| `expatternprovider` | `[1.0.0,)` | 客户端、服务端 |
+| `nuclearcraft` | `[0,)` | 客户端、服务端 |
+| `bmaddon` | `[0,)` | 客户端、服务端 |
+| `neoecoae` | `[20.5.1,)` | 客户端、服务端 |
+| `gtceu` | `[0,)` | 客户端、服务端 |
+| `gtlcore` | `[0,)` | 客户端、服务端 |
+| `gtmthings` | `[0,)` | 客户端、服务端 |
+| `productivebees` | `[0,)` | 客户端、服务端 |
+| `extrahnn` | `[0,)` | 客户端、服务端 |
+| `hostilenetworks` | `[0,)` | 客户端、服务端 |
+| `woot_revived` | `[0,)` | 客户端、服务端 |
 
-**说明：以上仅列出部分联动模组，并非完整列表；本模组还支持其他未在此处逐项列出的联动。所有联动均按实际安装情况启用，不要求全部安装。**
+`[x,)` 表示最低 x、无上限；`[0,)` 表示未限定最低版本。未在表中列出的其他动态联动仍可存在。
 
-可选联动不要求安装；安装时须符合上表版本范围，并安装该联动模组自身要求的前置。未声明最低版本的其他动态联动不在此处编造版本下限。
-
-MixinExtras 由 Useless Core 内置提供，通常无需单独安装。
-
-Minecraft 的宽松加载声明不代表本工程已支持其他 Minecraft 主版本。开发构建及本地编译 API 清单见 [BUILDING.md](BUILDING.md)。
+MixinExtras Forge 0.5.5 或更高由 Core 通过 Jar-in-Jar 内置，通常无需单独安装；Core 本身不要求 AE2。
 <!-- runtime-dependencies:end -->
 
 ## Source and attribution
@@ -111,3 +109,9 @@ Woot Revived（`woot_revived`）为可选联动，无版本上限；本次对照
 - 基础怪物工厂使用工厂之心与已完成编程的碎片作模具，保留生命燃料、召唤材料及基础时间，战利品表按精确有理数折算确定批次。碎片完整 NBT 必须匹配。
 - 不自动接入任意附属动态掉落回调、变体和升级模块产物。未知条件／函数不当作无条件奖励；无法表示的分支跳过并记录。当前按未安装升级的基础掉落处理，不提供经验输出。
 - 配方由服务器生成并分批同步，联机客户端可用 JEI 与万象样板。客户端和服务器均需更新到本版本以匹配网络协议。
+
+## 原美术资源授权说明
+
+本项目所使用的原美术资源，已获得原作者及美术作者虾比事李跌、鱼蛋、iava 等的使用许可。
+
+原项目：[SorrowMist/UselessMod](https://github.com/SorrowMist/UselessMod)。

@@ -25,6 +25,7 @@ public final class GregTechParts {
             boolean hatch = isA(machine, "com.gregtechceu.gtceu.api.machine.feature.multiblock.IMultiPart")
                     && (isA(machine, "com.gregtechceu.gtceu.api.capability.IDataAccessHatch")
                     || isA(machine, "com.gregtechceu.gtceu.common.machine.multiblock.part.OpticalComputationHatchMachine")
+                    || GregTechFurnacePower.inputPart(machine)
                     || isMaintenancePart(machine)
                     || isA(machine, "com.gregtechceu.gtceu.api.machine.feature.ICleanroomProvider"));
             if (!hatch || !((Collection<?>) call(machine, "getControllers")).isEmpty()) return false;

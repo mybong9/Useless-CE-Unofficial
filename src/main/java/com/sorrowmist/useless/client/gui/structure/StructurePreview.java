@@ -135,6 +135,10 @@ public final class StructurePreview {
                 if(type!=null)lines.add(text(switch(type){case PATTERN_ASSEMBLY->"assembly_rule";case MOLD_HUB->"mold_rule";case PASSIVE_HATCH->"passive_rule";}).withStyle(ChatFormatting.AQUA));
                 else lines.add(text("filler_rule").withStyle(ChatFormatting.GRAY));
             }
+            if(selected.part()==Part.INTERFACE || selected.part()==Part.CASING) {
+                lines.add(text("gt_hatches").withStyle(ChatFormatting.AQUA));
+                lines.add(text("gt_hatches_rules").withStyle(ChatFormatting.GRAY));
+            }
             lines.add(text("candidate_hint").withStyle(ChatFormatting.GRAY));return lines;
         }
         if(inViewport(x,y)) {
@@ -144,9 +148,10 @@ public final class StructurePreview {
         if(x>=4&&x<145&&y>=4&&y<18)return List.of(text("coil_rule"));
         if(x>=282&&y>=24&&y<128)return List.of(text("layers_help"));
         if(x>=250&&y>=132&&y<146)return List.of(text("encode_help"),text("bill_only"));
-        if(x>=52&&x<124&&y>=132&&y<146)return List.of(text("ports_help"));
+        if(x>=52&&x<124&&y>=132&&y<146)return List.of(text("ports_help"),text("gt_hatches"),text("gt_hatches_rules"));
         if(y>=132&&y<146)return List.of(text("controls"));
-        if(y>=183&&y<195&&selected!=null&&selected.part()==Part.INTERFACE)return List.of(text("ports_help"));
+        if(y>=183&&y<195&&selected!=null&&(selected.part()==Part.INTERFACE || selected.part()==Part.CASING))
+            return List.of(text("ports_help"),text("gt_hatches"),text("gt_hatches_rules"));
         return List.of();
     }
 

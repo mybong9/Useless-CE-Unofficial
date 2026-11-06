@@ -40,7 +40,7 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
             int fePerEU = fePerEU();
             long[] voltages = (long[]) gtValuesClass().getField("V").get(null);
             for (Recipe<?> source : level.getRecipeManager().getRecipes()) {
-                if (source.getId().getNamespace().equals("gtlcore")) continue;
+
                 if (!com.sorrowmist.useless.compat.gtceu.GregTechParts.isA(source, "com.gregtechceu.gtceu.api.recipe.GTRecipe")) continue;
                 try {
                     AdvancedAlloyFurnaceRecipe converted = convertSource(source, machines, voltages, fePerEU);
@@ -72,8 +72,8 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         if (!((Collection<?>) field(source, "ingredientActions")).isEmpty())
             throw new UnsupportedOperationException("ingredient actions");
         CompoundTag metadata = (CompoundTag) field(source, "data");
-        // Only presentation/recipe-generation hints are inert during execution.
-        Set<String> inertKeys = Set.of("solder_multiplier", "disable_distillery", "hide_duration");
+        // ebf_temp is checked against live hatches/coils; euTier is derived from the EU input.
+        Set<String> inertKeys = Set.of("solder_multiplier", "disable_distillery", "hide_duration", "ebf_temp", "euTier");
         for (String key : metadata.getAllKeys()) if (!inertKeys.contains(key))
             throw new UnsupportedOperationException("metadata: " + key);
         if (optionalField(source, "outputModifier") != null)
@@ -122,6 +122,7 @@ public final class GregTechRecipeAdapter implements IRecipeAdapter<GregTechSynth
         if (machineChoices.length == 0) throw new UnsupportedOperationException("no voltage-compatible mold: " + source.getType());
         List<Ingredient> molds = new ArrayList<>();
         molds.add(Ingredient.of(machineChoices));
+        if(metadata.contains("ebf_temp")){var coil=com.sorrowmist.useless.compat.gtceu.GregTechFurnacePower.coilMold();if(coil.isEmpty())throw new UnsupportedOperationException("no registered heating coils");molds.add(coil);}
         GregTechBatchPlan batch = GregTechBatchPlan.create(outputs.stream()
                 .map(part -> new GregTechBatchPlan.Chance(part.chance, part.maximum, part.ticks)).toList());
         List<CountedIngredient> items = new ArrayList<>();
