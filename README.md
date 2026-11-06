@@ -101,7 +101,6 @@ crash reports, local configuration, caches, credentials and third-party dependen
 资源蜜蜂群系限制可在通用配置 → 万象炉设置 → 配方转换中通过 `productive_bees_biome_restriction` 切换，默认开启；关闭立即生效，不改变配方成本。GTM 同时兼容旧版和 7.5.3 的电压常量路径。
 
 
-不提供 GTL 专用联动：不转换 `gtlcore` 命名空间配方，不识别 GTL 重力维护仓或其专用环境条件。普通 GTM 的研究、洁净室及机器配方联动保留。
 
 ## Woot Revived 联动
 
