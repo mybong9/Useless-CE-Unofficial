@@ -55,7 +55,7 @@ final class AeNetworks {
             return null;
         }
         try {
-            return com.sorrowmist.uselesscore.api.capability.CoreCapabilities.get(level, Capabilities.IN_WORLD_GRID_NODE_HOST, pos, null);
+            return AeDeviceLinker.resolveHost(level, pos);
         } catch (Throwable notReady) {
             // 能力查询本身不该抛，但方块实体可能正处于替换/卸载的中间态。当作「暂时没有」。
             return null;

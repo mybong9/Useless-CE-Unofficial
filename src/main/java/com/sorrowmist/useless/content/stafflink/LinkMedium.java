@@ -64,7 +64,8 @@ public enum LinkMedium {
      *
      * <p><b>同样必须追加在末尾</b>，理由见 {@link #AE_ENERGY}。</p>
      */
-    AE_PRESSURE("gui.useless_mod.wireless_logistics.medium.ae_pressure", ResourceFamily.PRESSURE);
+    AE_PRESSURE("gui.useless_mod.wireless_logistics.medium.ae_pressure", ResourceFamily.PRESSURE),
+    AE_KEY("gui.useless_mod.wireless_logistics.medium.ae_key", ResourceFamily.AE_KEY);
 
     private static final String MEKANISM = "mekanism";
     private static final String ARS_NOUVEAU = "ars_nouveau";
@@ -101,7 +102,16 @@ public enum LinkMedium {
      */
     public boolean isAe() {
         return this == AE_ITEM || this == AE_FLUID || this == AE_CHEMICAL || this == AE_SOURCE
-                || this == AE_ENERGY || this == AE_PRESSURE;
+                || this == AE_ENERGY || this == AE_PRESSURE || this == AE_KEY;
+    }
+
+    public LinkMedium toggleAe() {
+        for (LinkMedium candidate : values()) {
+            if (candidate.family == family && candidate.isAe() != isAe() && candidate.isSupported()) {
+                return candidate;
+            }
+        }
+        return this;
     }
 
     /** 当前环境是否支持这种资源。可选集成缺失时界面跳过、服务端拒绝。 */
@@ -109,7 +119,7 @@ public enum LinkMedium {
         return switch (this) {
             case CHEMICAL -> ModList.get().isLoaded(MEKANISM);
             case SOURCE -> ModList.get().isLoaded(ARS_NOUVEAU);
-            case AE_ITEM, AE_FLUID -> ModList.get().isLoaded(AE2);
+            case AE_ITEM, AE_FLUID, AE_KEY -> ModList.get().isLoaded(AE2);
             // 化学品/魔源/能量要进 ME 网络，除了 AE2 还得有把它们带进网络的那个附属。
             case AE_CHEMICAL -> ModList.get().isLoaded(AE2) && ModList.get().isLoaded(APPLIED_MEKANISTICS);
             case AE_SOURCE -> ModList.get().isLoaded(AE2) && ModList.get().isLoaded(ARS_ENERGISTIQUE);
@@ -130,7 +140,7 @@ public enum LinkMedium {
      */
     private static final LinkMedium[] MENU_ORDER = {
             ITEM, AE_ITEM, FLUID, AE_FLUID, ENERGY, AE_ENERGY, PRESSURE, AE_PRESSURE,
-            CHEMICAL, AE_CHEMICAL, SOURCE, AE_SOURCE, STRESS
+            CHEMICAL, AE_CHEMICAL, SOURCE, AE_SOURCE, STRESS, AE_KEY
     };
 
     /**

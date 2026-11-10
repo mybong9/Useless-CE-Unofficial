@@ -212,6 +212,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     private UiButton flowButton;
     private UiButton saveNameButton;
     private UiButton mediumButton;
+    private UiButton aeButton;
     /**
      * 资源类型下拉是否展开。
      *
@@ -358,8 +359,13 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
                 button -> edit(config -> withFlow(config, config.flow().next()))));
         mediumButton = addRenderableWidget(new UiButton(
                 leftPos + MEDIUM_BUTTON_X, topPos + ROW_SECOND_Y,
-                FLOW_WIDTH, ROW_HEIGHT, Component.empty(),
+                FLOW_WIDTH - 54, ROW_HEIGHT, Component.empty(),
                 button -> { mediumMenuOpen = !mediumMenuOpen; mediumScroll = Math.max(0,Math.min(mediumOptions.indexOf(menu.getSelectedMedium()),mediumOptions.size()-mediumVisibleRows())); }));
+        aeButton = addRenderableWidget(new UiButton(
+                leftPos + MEDIUM_BUTTON_X + FLOW_WIDTH - 50, topPos + ROW_SECOND_Y, 50, ROW_HEIGHT,
+                Component.empty(), button -> edit(config -> new StaffLinkRoute(
+                        config.anchor(), config.route(), config.enabled(), config.flow(), config.medium().toggleAe(),
+                        config.amount(), config.interval(), config.side(), config.weight(), config.filter()))));
         enabledButton = addRenderableWidget(new UiButton(
                 leftPos + CONTENT_LEFT, topPos + ROW_THIRD_Y, FLOW_WIDTH, ROW_HEIGHT,
                 Component.empty(), button -> edit(config -> withEnabled(config, !config.enabled()))));
@@ -483,7 +489,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         inventoryButton.selected(inventoryOpen);advancedButton.selected(advancedOpen);
         renameSelectionButton.visible = advancedOpen;
         renameSelectionButton.selected(renameSelectionMode);
-        nameField.visible=saveNameButton.visible=flowButton.visible=mediumButton.visible=enabledButton.visible=sideButton.visible=advancedOpen;
+        nameField.visible=saveNameButton.visible=flowButton.visible=mediumButton.visible=aeButton.visible=enabledButton.visible=sideButton.visible=advancedOpen;
         for(int i=0;i<3;i++)for(var b:steppers[i])if(b!=null)b.active=numericFields.get(i).field().active && (i!=2||!stressFields);
     }
 
@@ -1242,6 +1248,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         for(int i=0;i<routeButtons.length;i++)routeButtons[i].selected(i==menu.getSelectedRoute());
         flowButton.active = hasConfig;
         mediumButton.active = hasConfig;
+        aeButton.active = hasConfig && config.medium().toggleAe() != config.medium();
         enabledButton.active = hasConfig;
         sideButton.active = hasConfig;
         if (!hasConfig) {
@@ -1330,6 +1337,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
             Component empty = Component.literal("-");
             flowButton.setMessage(empty);
             mediumButton.setMessage(empty);
+            aeButton.setMessage(empty);
             enabledButton.setMessage(empty);
             sideButton.setMessage(empty);
             return;
@@ -1337,6 +1345,8 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
         flowButton.setMessage(label("flow_label", config.flow().displayName()));
         mediumButton.setMessage(label("medium_label", config.medium().displayName()));
+        aeButton.setMessage(Component.translatable("gui.useless_mod.wireless_logistics.ae_"
+                + (config.medium().isAe() ? "on" : "off")));
         enabledButton.setMessage(label("enabled_label",
                 Component.translatable(config.enabled()
                         ? "gui.useless_mod.wireless_logistics.state_on"
@@ -1577,14 +1587,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         if (config == null) {
             return;
         }
-        // blocksAeSourceWithoutWhitelist 内部已经处理了「本资源类型根本不吃过滤器」这件事
-        // （能量 / 魔源恒 false —— 它们从网络出来只有一种，不需要白名单，也标记不上），
-        // 这里只补「源端是不是 AE」。
-        if (config.medium().isAe() && config.blocksAeSourceWithoutWhitelist()) {
-            Component text = Component.translatable(
-                    "gui.useless_mod.wireless_logistics.ae_whitelist_warning");
-            UiDraw.text(graphics,font,text.getString(),CONTENT_LEFT,188,350,LogisticsStyle.ERROR_TEXT_COLOR);
-        }
+
     }
 
     /** 标题行右侧的一次性提示（复制/粘贴等）；{@link #NOTICE_TICKS} tick 后自己消失。 */
@@ -2832,6 +2835,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         }
         flowButton.releaseVisualState();
         mediumButton.releaseVisualState();
+        aeButton.releaseVisualState();
         enabledButton.releaseVisualState();
         sideButton.releaseVisualState();
         prevNetworkButton.releaseVisualState();

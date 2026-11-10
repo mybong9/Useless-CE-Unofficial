@@ -67,7 +67,7 @@ public final class AeDeviceLinker {
     }
 
     @Nullable
-    private static IInWorldGridNodeHost resolveHost(Level level, BlockPos pos) {
+    static IInWorldGridNodeHost resolveHost(Level level, BlockPos pos) {
         BlockEntity entity = level.getBlockEntity(pos);
         if (entity instanceof IInWorldGridNodeHost host) return host;
         IInWorldGridNodeHost host = com.sorrowmist.uselesscore.api.capability.CoreCapabilities.get(

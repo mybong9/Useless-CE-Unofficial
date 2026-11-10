@@ -1212,7 +1212,7 @@
   "gui.useless_mod.wireless_logistics.filter_cond_op_at_most": "≤",
   "gui.useless_mod.wireless_logistics.filter_cond_self": "自身",
   "gui.useless_mod.wireless_logistics.filter_cond_value_hint": "留空 = 關閉；支援 K / M / G / T / P / E",
-  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "#標籤 或通配符，例如 #c:ingots 、 *iron*",
+  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "範例 (*ores* | #forge:ores) & !*copper*，支援 !、&、|、括號與 ?",
   "gui.useless_mod.wireless_logistics.filter_pattern_tag": "按物品 / 流體標籤匹配",
   "gui.useless_mod.wireless_logistics.filter_pattern_glob": "按註冊名 / 顯示名匹配；* 任意長，? 一個字元",
   "gui.useless_mod.wireless_logistics.filter_pattern_unresolved": "沒有資源使用這條標籤，一個物品都不會搬",
@@ -1297,5 +1297,8 @@
   "commands.useless_mod.patterns.repair.no_machines": "該網路上沒有已通電的萬象爐或 ME 樣板總成，無需修復",
   "commands.useless_mod.patterns.repair.summary": "已掃描 %s 張萬象樣板，發現 %s 張失效；已修復 %s 張，%s 張無法修復（配方已移除或存在歧義）。",
   "commands.useless_mod.patterns.repair.summary.preview": "已掃描 %s 張萬象樣板，發現 %s 張失效；其中 %s 張可修復，%s 張無法修復（配方已移除或存在歧義）。本次為預覽，未寫回任何槽位。",
-  "commands.useless_mod.patterns.repair.detail": "無法修復：%s，綁定配方 %s"
+  "commands.useless_mod.patterns.repair.detail": "無法修復：%s，綁定配方 %s",
+  "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey 包裹堆疊",
+  "gui.useless_mod.wireless_logistics.ae_on": "AE 開",
+  "gui.useless_mod.wireless_logistics.ae_off": "AE 關"
 }

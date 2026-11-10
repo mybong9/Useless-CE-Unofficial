@@ -40,6 +40,18 @@ public final class StaffLinkSavedData extends com.sorrowmist.uselesscore.api.reg
     private static final String TAG_OWNER_REGISTERED = "Registered";
     private static final String TAG_OWNER_ENTRY_ID = "Id";
 
+    private CompoundTag keyReturns = new CompoundTag();
+
+    public CompoundTag pendingKeyReturn(String endpoint) {
+        return keyReturns.getCompound(endpoint);
+    }
+
+    public void setPendingKeyReturn(String endpoint, CompoundTag value) {
+        if (value.isEmpty()) keyReturns.remove(endpoint);
+        else keyReturns.put(endpoint, value);
+        setDirty();
+    }
+
     private final Map<UUID, StaffLinkNetwork> networks = new LinkedHashMap<>();
     /** 归属者 UUID → 它登记的网络。 */
     private final Map<UUID, OwnerRegistration> owners = new LinkedHashMap<>();
@@ -87,6 +99,7 @@ public final class StaffLinkSavedData extends com.sorrowmist.uselesscore.api.reg
 
     private static StaffLinkSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         StaffLinkSavedData data = new StaffLinkSavedData();
+        data.keyReturns = tag.getCompound("KeyReturns").copy();
         ListTag list = tag.getList(TAG_NETWORKS, Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
             StaffLinkNetwork network = StaffLinkNetwork.load(list.getCompound(i), registries);
@@ -223,6 +236,7 @@ public final class StaffLinkSavedData extends com.sorrowmist.uselesscore.api.reg
 
     @Override
     public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
+        tag.put("KeyReturns", keyReturns.copy());
         tag.putInt(TAG_VERSION, CURRENT_VERSION);
 
         ListTag list = new ListTag();

@@ -1219,7 +1219,7 @@
   "gui.useless_mod.wireless_logistics.filter_cond_op_at_most": "≤",
   "gui.useless_mod.wireless_logistics.filter_cond_self": "Self",
   "gui.useless_mod.wireless_logistics.filter_cond_value_hint": "Blank = off; K/M/G/T/P/E supported",
-  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "#tag or a wildcard, e.g. #c:ingots or *iron*",
+  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "Example: (*ores* | #forge:ores) & !*copper*. Supports !, &, |, parentheses and ?.",
   "gui.useless_mod.wireless_logistics.filter_pattern_tag": "Matches by item/fluid tag",
   "gui.useless_mod.wireless_logistics.filter_pattern_glob": "Match by registry id / display name; * any run, ? one char",
   "gui.useless_mod.wireless_logistics.filter_pattern_unresolved": "No resource uses this tag; nothing will move",
@@ -1461,5 +1461,8 @@
   "key.useless_mod.gt_tool_wheel": "GT tool wheel (hold)",
   "jei.useless_mod.structure.gt_hatches": "GT replacements: input energy / laser, data access, optical data / computation receiver and maintenance hatches",
   "jei.useless_mod.structure.gt_hatches_rules": "Replace casings or bottom ports; GTMThings energy hatches are supported. Keep at least one pattern and one mold module.",
-  "gui.useless_mod.gt_wheel.title": "GT Tools"
+  "gui.useless_mod.gt_wheel.title": "GT Tools",
+  "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey wrapped stack",
+  "gui.useless_mod.wireless_logistics.ae_on": "AE On",
+  "gui.useless_mod.wireless_logistics.ae_off": "AE Off"
 }

@@ -157,6 +157,7 @@ public final class StaffLinkTargets {
             // 不出现任何 AE2 类型，因此没装 AE2 时这段代码照常加载、只是永远解析不出结果。
             case AE_ITEM -> AeLogisticsCompatLoader.itemEndpoint(level, pos);
             case AE_FLUID -> AeLogisticsCompatLoader.fluidEndpoint(level, pos);
+            case AE_KEY -> medium.isSupported() ? com.sorrowmist.useless.compat.ae.AeLogisticsCompat.keyEndpoint(level, pos) : null;
             // 化学品/魔源/能量要进 ME 网络得靠各自的附属（appmek / arseng / appflux），
             // 所以走独立的桥。
             case AE_CHEMICAL -> AeChemicalCompatLoader.chemicalEndpoint(level, pos);
@@ -371,38 +372,16 @@ public final class StaffLinkTargets {
         if (from == null || limit <= 0L || source.medium().family() != target.medium().family()) {
             return 0L;
         }
-        // 过滤器两端都算数：释放端决定「允许抽出什么」，接收端决定「允许收下什么」，
-        // 一个资源必须同时通过两边才允许搬运。只看一端的话，接收端设的过滤器等于没设。
-        //
-        // 唯一的例外是「从 AE 取出」：源端是 ME 网络时源端过滤器不参与判定，拿什么完全由
-        // 接收端的白名单决定（见 LinkMedium#isAe）。网络里动辄上千种物品，让玩家在源端列
-        // 白名单既繁琐又容易漏，而「我要往这个箱子拿什么」本来就该由接收端说。
-        boolean sourceIsAe = source.medium().isAe();
-        List<LinkFilterSlot> sourceFilter = sourceIsAe ? List.of() : source.activeFilters();
-        List<LinkFilterSlot> targetFilter = target.activeFilters();
-
-        // ---- Req3：源端是 ME 网络 + 接收端没有任何「类型对得上」的白名单 ⇒ 一个也不搬 ----
-        //
-        // 理由：上面那条例外把「拿什么」的决定权<b>整条</b>交给了接收端。如果接收端什么都没写，
-        // 那条例外就退化成「把整张网络灌进这个容器」——而网络里可能有几千种东西，
-        // 这是个破坏性后果。所以「没有白名单」在 AE 源这一侧必须解释为「不搬」，
-        // 而不是「不限制」（后者是非 AE 源的语义，保持不变）。
-        //
-        // ⚠️ 这条规则<b>只对「网络里能装多种资源」的族成立</b>：能量与魔源从网络里出来只有一种，
-        // 既没有灌满容器的风险，也根本没有可标记物（界面不给填）。对它们套这条规则 = 把线路锁死，
-        // 玩家搬不动又无处解锁。判据封装在 StaffLinkRoute#blocksAeSourceWithoutWhitelist。
-        //
-        // 放在 resolve(target) 之前：省一次目标端解析。
-        if (sourceIsAe && target.blocksAeSourceWithoutWhitelist()) {
+        if (source.medium() == LinkMedium.AE_ITEM && !source.hasApplicableFilter()) {
             return 0L;
         }
-
+        List<LinkFilterSlot> sourceFilter = source.activeFilters();
+        List<LinkFilterSlot> targetFilter = target.activeFilters();
         Object to = resolve(targetLevel, target.anchor().pos(), target.side(), target.medium());
         if (to == null) {
             return 0L;
         }
-        // 源端是 ME 网络 ⇒ 抽出来的东西一定塞得回去 ⇒ 不必先问目标能收多少。见方法说明。
-        boolean skipTargetProbe = sourceIsAe;
+        boolean skipTargetProbe = false;
         return switch (source.medium()) {
             case ITEM, AE_ITEM -> moveItems(sourceLevel, source.anchor().pos(),
                     (LongItemHandler) from, (LongItemHandler) to, limit, sourceFilter, targetFilter,
@@ -417,6 +396,9 @@ public final class StaffLinkTargets {
             // 应力<b>不走逐对搬运</b>：转速与应力容量是整张网络的连续状态量，不是「一轮搬多少」，
             // 必须拿到同线路上全部输入与输出才能分配。它由 StaffLinkEngine#runNetwork 里的
             // 专用分支整条处理，永远走不到这里。
+            case AE_KEY -> com.sorrowmist.useless.compat.ae.AeLogisticsCompat.moveKeys(
+                    (com.sorrowmist.useless.compat.ae.AeLogisticsCompat.KeyEndpoint) from,
+                    (com.sorrowmist.useless.compat.ae.AeLogisticsCompat.KeyEndpoint) to, limit);
             case STRESS -> 0L;
             // 气压也不走逐对搬运：它是「把接收端伺服到目标气压」的状态量，可能要把接收端的空气
             // 抽掉（排到环境），且搬运量来自压力差而不是 amount（amount 已被复用为目标气压）。

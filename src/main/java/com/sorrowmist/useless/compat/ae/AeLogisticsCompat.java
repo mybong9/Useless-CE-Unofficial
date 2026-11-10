@@ -67,6 +67,63 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class AeLogisticsCompat implements AeLogisticsBridge {
 
+    public record KeyEndpoint(Level level, BlockPos pos) {}
+
+    public static KeyEndpoint keyEndpoint(Level level, BlockPos pos) {
+        return AeNetworks.isEndpoint(level, pos) ? new KeyEndpoint(level, pos.immutable()) : null;
+    }
+
+    public static long moveKeys(KeyEndpoint from, KeyEndpoint to, long limit) {
+        MEStorage sourceStorage = AeNetworks.storage(from.level(), from.pos());
+        MEStorage targetStorage = AeNetworks.storage(to.level(), to.pos());
+        if (sourceStorage == null || targetStorage == null || sourceStorage == targetStorage) return 0;
+        if (!(from.level() instanceof net.minecraft.server.level.ServerLevel serverLevel)) return 0;
+        var saved = com.sorrowmist.useless.world.stafflink.StaffLinkSavedData.get(serverLevel.getServer());
+        String endpoint = serverLevel.dimension().location() + "/" + from.pos().asLong();
+        var pending = saved.pendingKeyReturn(endpoint);
+        if (!pending.isEmpty()) {
+            var key = AEKey.fromTagGeneric(pending.getCompound("Key"));
+            if (key == null) return 0;
+            long remaining = pending.getLong("Amount");
+            remaining -= sourceStorage.insert(key, remaining, Actionable.MODULATE, source());
+            if (remaining > 0) {
+                var updated = pending.copy();
+                updated.putLong("Amount", remaining);
+                saved.setPendingKeyReturn(endpoint, updated);
+                return 0;
+            }
+            saved.setPendingKeyReturn(endpoint, new net.minecraft.nbt.CompoundTag());
+        }
+        long moved = 0;
+        for (var entry : sourceStorage.getAvailableStacks()) {
+            // The wrapped route has no item filter. It must obey the empty-filter export rule.
+            if (entry.getKey() instanceof AEItemKey) continue;
+            var stack = new appeng.api.stacks.GenericStack(entry.getKey(), entry.getLongValue());
+            long amount = Math.min(stack.amount(), limit - moved);
+            if (amount <= 0) continue;
+            var key = stack.what();
+            long accepted = targetStorage.insert(key, amount, Actionable.SIMULATE, source());
+            if (accepted <= 0) continue;
+            long extracted = sourceStorage.extract(key, Math.min(amount, accepted), Actionable.MODULATE, source());
+            if (extracted <= 0) continue;
+            long inserted = targetStorage.insert(key, extracted, Actionable.MODULATE, source());
+            if (inserted < extracted) {
+                long remainder = extracted - inserted;
+                long restored = sourceStorage.insert(key, remainder, Actionable.MODULATE, source());
+                if (restored < remainder) {
+                    var deferred = new net.minecraft.nbt.CompoundTag();
+                    deferred.put("Key", key.toTagGeneric());
+                    deferred.putLong("Amount", remainder - restored);
+                    saved.setPendingKeyReturn(endpoint, deferred);
+                    return moved + inserted;
+                }
+            }
+            moved += inserted;
+            if (moved >= limit) break;
+        }
+        return moved;
+    }
+
     /** AE2 的动作源：无线物流没有玩家或机器作为发起者，用空源即可。 */
     private static volatile IActionSource cachedSource;
 

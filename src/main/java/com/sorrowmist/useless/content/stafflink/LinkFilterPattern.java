@@ -49,14 +49,23 @@ import java.util.List;
  * 因此可以安全地放进 {@link LinkFilterSlot} 并参与 NBT / 网络编解码的比较。</p>
  */
 public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> itemTag,
-                                @Nullable TagKey<Fluid> fluidTag) {
+                                @Nullable TagKey<Fluid> fluidTag, Expression expression) {
+
+    public LinkFilterPattern(Kind kind, String text, TagKey<Item> itemTag, TagKey<Fluid> fluidTag) {
+        this(kind, text, itemTag, fluidTag, null);
+    }
+
+    @FunctionalInterface
+    public interface Expression {
+        boolean test(java.util.function.Predicate<LinkFilterPattern> matches);
+    }
 
     /** 输入的形态。 */
     public enum Kind {
         /** {@code #namespace:path}，按标签匹配。 */
         TAG,
         /** 含通配符的字面量，按 id / 显示名匹配。 */
-        GLOB
+        GLOB, EXPRESSION
     }
 
     /** 模式原文长度上限；超出直接判非法（存档被改坏时也不必去匹配一个巨型字符串）。 */
@@ -70,6 +79,16 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
     public LinkFilterPattern {
         kind = kind == null ? Kind.GLOB : kind;
         text = text == null ? "" : text;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof LinkFilterPattern pattern && kind == pattern.kind && text.equals(pattern.text);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hash(kind, text);
     }
 
     // ------------------------------------------------------------------ 解析
@@ -90,6 +109,16 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
         String trimmed = raw == null ? "" : raw.trim();
         if (trimmed.isEmpty() || trimmed.length() > MAX_LENGTH) {
             return null;
+        }
+        if (trimmed.chars().anyMatch(c -> "!&|()".indexOf(c) >= 0)) {
+            try {
+                Parser parser = new Parser(trimmed);
+                Expression expression = parser.parseOr();
+                if (parser.peek() != 0) return null;
+                return new LinkFilterPattern(Kind.EXPRESSION, trimmed, null, null, expression);
+            } catch (IllegalArgumentException invalid) {
+                return null;
+            }
         }
         if (trimmed.charAt(0) == '#') {
             return parseTag(trimmed);
@@ -132,6 +161,67 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
         return ResourceLocation.tryParse("minecraft:" + body);
     }
 
+    private static final class Parser {
+        private final String input;
+        private int position;
+
+        Parser(String input) { this.input = input; }
+
+        char peek() {
+            while (position < input.length() && Character.isWhitespace(input.charAt(position))) position++;
+            return position == input.length() ? 0 : input.charAt(position);
+        }
+
+        boolean consume(char token) {
+            if (peek() != token) return false;
+            position++;
+            return true;
+        }
+
+        Expression parseOr() {
+            Expression result = parseAnd();
+            while (consume('|')) {
+                if (position < input.length() && input.charAt(position) == '|') position++;
+                Expression left = result;
+                Expression right = parseAnd();
+                result = matches -> left.test(matches) || right.test(matches);
+            }
+            return result;
+        }
+
+        Expression parseAnd() {
+            Expression result = parseTerm();
+            while (consume('&')) {
+                if (position < input.length() && input.charAt(position) == '&') position++;
+                Expression left = result;
+                Expression right = parseTerm();
+                result = matches -> left.test(matches) && right.test(matches);
+            }
+            return result;
+        }
+
+        Expression parseTerm() {
+            if (consume('!')) {
+                Expression term = parseTerm();
+                return matches -> !term.test(matches);
+            }
+            if (consume('(')) {
+                Expression term = parseOr();
+                if (!consume(')')) throw new IllegalArgumentException();
+                return term;
+            }
+            peek();
+            int start = position;
+            while (position < input.length() && "!&|()".indexOf(input.charAt(position)) < 0) position++;
+            String token = input.substring(start, position).trim();
+            if (token.isEmpty()) throw new IllegalArgumentException();
+            LinkFilterPattern leaf = token.startsWith("#") ? parseTag(token)
+                    : new LinkFilterPattern(Kind.GLOB, token, null, null);
+            if (leaf == null) throw new IllegalArgumentException();
+            return matches -> matches.test(leaf);
+        }
+    }
+
     // ------------------------------------------------------------------ 匹配
 
     /**
@@ -146,6 +236,7 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
         if (stack == null || stack.isEmpty()) {
             return false;
         }
+        if (expression != null) return expression.test(leaf -> leaf.matchesItem(stack));
         if (kind == Kind.TAG) {
             return matchesTag(BuiltInRegistries.ITEM, itemTag, stack.getItem());
         }
@@ -162,6 +253,7 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
         if (stack == null || stack.isEmpty()) {
             return false;
         }
+        if (expression != null) return expression.test(leaf -> leaf.matchesFluid(stack));
         if (kind == Kind.TAG) {
             return matchesTag(BuiltInRegistries.FLUID, fluidTag, stack.getFluid());
         }
@@ -188,7 +280,8 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
         if (kind == Kind.TAG || chemicalId == null) {
             return false;
         }
-        return matchesGlob(chemicalId.toString());
+        return expression != null ? expression.test(leaf -> leaf.matchesChemicalId(chemicalId))
+                : matchesGlob(chemicalId.toString());
     }
 
     /**
@@ -198,7 +291,7 @@ public record LinkFilterPattern(Kind kind, String text, @Nullable TagKey<Item> i
      * {@link Kind#GLOB} 恒为真（通配符能不能匹配到要看具体资源，静态判不了）。</p>
      */
     public boolean isResolvable() {
-        if (kind == Kind.GLOB) {
+        if (kind != Kind.TAG) {
             return true;
         }
         if (itemTag != null && BuiltInRegistries.ITEM.getTag(itemTag).isPresent()) {

@@ -17,5 +17,6 @@ public enum ResourceFamily {
     /** 转速 + 应力容量；只有方块形态，没有 AE 形态。 */
     STRESS,
     /** 气压（空气）；方块形态（气动工艺）与 AE 形态（Applied Pneumatics）都有。 */
-    PRESSURE
+    PRESSURE,
+    AE_KEY
 }

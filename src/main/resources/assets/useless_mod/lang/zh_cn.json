@@ -1220,7 +1220,7 @@
   "gui.useless_mod.wireless_logistics.filter_cond_op_at_most": "≤",
   "gui.useless_mod.wireless_logistics.filter_cond_self": "自身",
   "gui.useless_mod.wireless_logistics.filter_cond_value_hint": "留空 = 关闭；支持 K / M / G / T / P / E",
-  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "#标签 或通配符，例如 #c:ingots 、 *iron*",
+  "gui.useless_mod.wireless_logistics.filter_pattern_hint": "示例 (*ores* | #forge:ores) & !*copper*，支持 !、&、|、括号和 ?",
   "gui.useless_mod.wireless_logistics.filter_pattern_tag": "按物品 / 流体标签匹配",
   "gui.useless_mod.wireless_logistics.filter_pattern_glob": "按注册名 / 显示名匹配；* 任意长，? 一个字符",
   "gui.useless_mod.wireless_logistics.filter_pattern_unresolved": "没有资源使用这条标签，一个物品都不会搬",
@@ -1465,5 +1465,8 @@
   "key.useless_mod.gt_tool_wheel": "GT 工具轮盘（长按）",
   "jei.useless_mod.structure.gt_hatches": "GT 可替换：输入能源仓、激光仓、数据仓、光学数据接收仓、算力接收仓及维护仓",
   "jei.useless_mod.structure.gt_hatches_rules": "可放在外壳或底层接口位置；GTMThings 能源仓也支持。样板阁和模具藏阁仍各需至少1个。",
-  "gui.useless_mod.gt_wheel.title": "GT 工具"
+  "gui.useless_mod.gt_wheel.title": "GT 工具",
+  "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey 包裹栈",
+  "gui.useless_mod.wireless_logistics.ae_on": "AE 开",
+  "gui.useless_mod.wireless_logistics.ae_off": "AE 关"
 }
