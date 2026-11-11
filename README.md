@@ -17,7 +17,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 <!-- runtime-dependencies:start -->
 ## 运行环境与依赖版本
 
-对应发布版本：**1.4.11**。Minecraft **1.20.1 / Forge**，Java **17+**。
+对应发布版本：**1.4.12**。Minecraft **1.20.1 / Forge**，Java **17+**。
 以下范围依据发布 JAR 的加载声明，其他模组仍需满足各自前置要求。
 
 ### 必需前置
@@ -53,6 +53,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 | `extrahnn` | `[0,)` | 客户端、服务端 |
 | `hostilenetworks` | `[0,)` | 客户端、服务端 |
 | `woot_revived` | `[0,)` | 客户端、服务端 |
+| `embers` | `[0,)` | 客户端、服务端 |
 
 `[x,)` 表示最低 x、无上限；`[0,)` 表示未限定最低版本。未在表中列出的其他动态联动仍可存在。
 

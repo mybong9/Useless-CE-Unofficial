@@ -1300,5 +1300,6 @@
   "commands.useless_mod.patterns.repair.detail": "無法修復：%s，綁定配方 %s",
   "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey 包裹堆疊",
   "gui.useless_mod.wireless_logistics.ae_on": "AE 開",
-  "gui.useless_mod.wireless_logistics.ae_off": "AE 關"
+  "gui.useless_mod.wireless_logistics.ae_off": "AE 關",
+  "useless_mod.configuration.enable_embers_recipe_conversion": "啟用餘燼復燃配方轉換"
 }

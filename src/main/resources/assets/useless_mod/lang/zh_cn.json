@@ -1468,5 +1468,6 @@
   "gui.useless_mod.gt_wheel.title": "GT 工具",
   "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey 包裹栈",
   "gui.useless_mod.wireless_logistics.ae_on": "AE 开",
-  "gui.useless_mod.wireless_logistics.ae_off": "AE 关"
+  "gui.useless_mod.wireless_logistics.ae_off": "AE 关",
+  "useless_mod.configuration.enable_embers_recipe_conversion": "启用余烬复燃配方转换"
 }

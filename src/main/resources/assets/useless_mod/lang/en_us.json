@@ -1464,5 +1464,6 @@
   "gui.useless_mod.gt_wheel.title": "GT Tools",
   "gui.useless_mod.wireless_logistics.medium.ae_key": "AEKey wrapped stack",
   "gui.useless_mod.wireless_logistics.ae_on": "AE On",
-  "gui.useless_mod.wireless_logistics.ae_off": "AE Off"
+  "gui.useless_mod.wireless_logistics.ae_off": "AE Off",
+  "useless_mod.configuration.enable_embers_recipe_conversion": "Enable Embers Rekindled recipe conversion"
 }
