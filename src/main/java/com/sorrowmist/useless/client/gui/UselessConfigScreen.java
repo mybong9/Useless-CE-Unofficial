@@ -37,6 +37,16 @@ public final class UselessConfigScreen extends ConfigFrame {
         type("服务端设置…", "Useless Mod服务端配置", "useless_mod-server.toml", ConfigManager.SERVER_SPEC, y + 2 * step, minecraft.hasSingleplayerServer());
         addRenderableWidget(Button.builder(Component.literal("完成"), b -> onClose()).bounds(width / 2 - 100, height - 22, 200, 20).build());
     }
+    static Screen forAreaDamage(Screen parent) {
+        Component title = Component.translatable("gui.useless_mod.staff_ui.area_damage_settings");
+        if (!ConfigManager.SERVER_SPEC.isLoaded() || !Minecraft.getInstance().hasSingleplayerServer()) {
+            return new Unavailable(parent, title);
+        }
+        Session session = new Session(ConfigManager.SERVER_SPEC, () -> {});
+        return new Category(parent, session, List.of("beef_tool"), List.of(title.getString()),
+                key -> key.startsWith("beef_aoe_damage_range_"), true);
+    }
+
     private void type(String label, String name, String file, ForgeConfigSpec spec, int y, boolean editable) {
         int w = Math.min(310, width - 30);
         Button button = addRenderableWidget(Button.builder(Component.literal(label), b -> minecraft.setScreen(
@@ -175,6 +185,8 @@ public final class UselessConfigScreen extends ConfigFrame {
         private final Screen parent;
         private final Session session;
         private final List<String> path, crumbs;
+        private final java.util.function.Predicate<String> visibleEntry;
+        private final boolean saveOnDone;
         private final Map<ForgeConfigSpec.ConfigValue<?>, Object> entered;
         private Rows rows;
         private Button cancel, reset, done;
@@ -182,14 +194,25 @@ public final class UselessConfigScreen extends ConfigFrame {
         private boolean refreshPending;
         private String error = "";
         Category(Screen parent, Session session, List<String> path, List<String> crumbs) {
+            this(parent, session, path, crumbs, key -> true, path.isEmpty());
+        }
+        Category(Screen parent, Session session, List<String> path, List<String> crumbs,
+                 java.util.function.Predicate<String> visibleEntry, boolean saveOnDone) {
             super(Component.literal(crumbs.get(crumbs.size() - 1)));
             this.parent = parent; this.session = session; this.path = List.copyOf(path); this.crumbs = List.copyOf(crumbs);
+            this.visibleEntry = visibleEntry; this.saveOnDone = saveOnDone;
             entered = session.snapshot(path);
+            if (saveOnDone && !path.isEmpty()) {
+                entered.keySet().removeIf(v -> !visibleEntry.test(v.getPath().get(path.size())));
+                session.initial.keySet().retainAll(entered.keySet());
+                session.pending.keySet().retainAll(entered.keySet());
+            }
         }
         @Override protected void init() {
             rows = new Rows();
             UnmodifiableConfig config = path.isEmpty() ? session.spec.getValues() : session.spec.getValues().get(path);
             config.valueMap().forEach((key, object) -> {
+                if (!visibleEntry.test(key)) return;
                 List<String> full = new ArrayList<>(path); full.add(key);
                 if (object instanceof UnmodifiableConfig || object instanceof ForgeConfigSpec.ConfigValue<?>) rows.append(new Row(full, object));
             });
@@ -215,7 +238,7 @@ public final class UselessConfigScreen extends ConfigFrame {
         }
         private void finish() {
             if (!session.valid(path)) return;
-            try { if (path.isEmpty()) session.save(); minecraft.setScreen(parent); }
+            try { if (saveOnDone) session.save(); minecraft.setScreen(parent); }
             catch (RuntimeException failure) { error = "保存失败，请检查配置文件权限或数值。"; }
         }
         @Override public void onClose() { session.restore(entered); minecraft.setScreen(parent); }

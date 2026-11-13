@@ -10,6 +10,9 @@ import net.minecraft.world.item.Item;
 
 public final class ModTags {
 
+    public static final TagKey<Block> MINEABLE_WITH_WRENCH =
+            BlockTags.create(new ResourceLocation("forge", "mineable/wrench"));
+
     public static final TagKey<Item> CATALYSTS = createItemTag("catalysts");
     public static final TagKey<Item> MOLDS = createItemTag("molds");
     public static final TagKey<Block> OMNIVERSAL_FURNACE_CASINGS =

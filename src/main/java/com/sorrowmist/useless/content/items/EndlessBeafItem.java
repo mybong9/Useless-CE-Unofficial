@@ -1435,10 +1435,7 @@ public class EndlessBeafItem extends TieredItem {
     @SuppressWarnings("all")
     public float getDestroySpeed(@NotNull ItemStack stack, @NotNull BlockState state) {
         float configSpeed = (float) ConfigManager.getBeefToolMiningSpeed();
-        boolean mineable = state.is(BlockTags.MINEABLE_WITH_PICKAXE)
-                || state.is(BlockTags.MINEABLE_WITH_AXE)
-                || state.is(BlockTags.MINEABLE_WITH_SHOVEL)
-                || state.is(BlockTags.MINEABLE_WITH_HOE);
+        boolean mineable = hasMiningTool(state);
         float baseSpeed = configSpeed > 0 ? configSpeed : (mineable ? Tiers.NETHERITE.getSpeed() : 1.0F);
 
         float hardness = state.getDestroySpeed(null, null);
@@ -1472,6 +1469,14 @@ public class EndlessBeafItem extends TieredItem {
         return speed;
     }
 
+    private static boolean hasMiningTool(BlockState state) {
+        return state.is(BlockTags.MINEABLE_WITH_PICKAXE)
+                || state.is(BlockTags.MINEABLE_WITH_AXE)
+                || state.is(BlockTags.MINEABLE_WITH_SHOVEL)
+                || state.is(BlockTags.MINEABLE_WITH_HOE)
+                || state.is(ModTags.MINEABLE_WITH_WRENCH);
+    }
+
     /**
      * 造化杖是「无等级万能工具」：不继承任何工具等级的 incorrect_for_*_tool 限制。
      *
@@ -1491,7 +1496,7 @@ public class EndlessBeafItem extends TieredItem {
             return true;
         }
         // 开关关闭 / 方块在锁定标签内：回到「下界合金层级」的原版语义
-        return super.isCorrectToolForDrops(stack, state)
+        return hasMiningTool(state)
                 && net.minecraftforge.common.TierSortingRegistry.isCorrectTierForDrops(Tiers.NETHERITE, state);
     }
 

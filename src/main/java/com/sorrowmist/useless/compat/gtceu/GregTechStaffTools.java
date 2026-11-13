@@ -21,8 +21,11 @@ public final class GregTechStaffTools {
             case HAMMER_MODE -> "HARD_HAMMER";
             default -> null;
         };
-        if (field == null) return Set.of();
-        try { return Set.of(Class.forName("com.gregtechceu.gtceu.api.item.tool.GTToolType").getField(field).get(null)); }
-        catch (ReflectiveOperationException | LinkageError unavailable) { return null; }
+        try {
+            Class<?> types = Class.forName("com.gregtechceu.gtceu.api.item.tool.GTToolType");
+            // The interaction tool selection does not replace the staff's pickaxe.
+            Object pickaxe = types.getField("PICKAXE").get(null);
+            return field == null ? Set.of(pickaxe) : Set.of(pickaxe, types.getField(field).get(null));
+        } catch (ReflectiveOperationException | LinkageError unavailable) { return null; }
     }
 }

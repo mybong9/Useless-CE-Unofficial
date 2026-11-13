@@ -72,7 +72,7 @@ public class ModeWheelScreen extends Screen {
     private static final int MODULE_GAP = 4;
     /** 连锁等价组齿轮图标的边长（画在连锁挖掘模块按钮右端）。 */
     private static final int GEAR_SIZE = 34;
-    private PressableAE2Button chainSettingsButton;
+    private PressableAE2Button chainSettingsButton, areaDamageSettingsButton;
     private BeefToolLayout.Group resizingGroup;
     private int groupStartWidth,groupStartHeight;
     private boolean movingPanel;
@@ -144,7 +144,7 @@ public class ModeWheelScreen extends Screen {
         modeButtons.clear();
         groupNameFields.clear();
         pageNameField = null;
-        chainSettingsButton = null;
+        chainSettingsButton = areaDamageSettingsButton = null;
 
         calculatePanelBounds();
         calculateGeometry();
@@ -389,6 +389,9 @@ public class ModeWheelScreen extends Screen {
         }
         chainSettingsButton = addRenderableWidget(new DarkButton(0, 0, GEAR_SIZE, MODULE_HEIGHT,
                 Component.translatable("gui.useless_mod.staff_ui.chain_settings"), ignored -> openChainSettings()));
+        areaDamageSettingsButton = addRenderableWidget(new DarkButton(0, 0, GEAR_SIZE, MODULE_HEIGHT,
+                Component.translatable("gui.useless_mod.staff_ui.chain_settings"),
+                ignored -> minecraft.setScreen(UselessConfigScreen.forAreaDamage(this))));
         positionModeButtons();
     }
 
@@ -534,21 +537,27 @@ public class ModeWheelScreen extends Screen {
             ModuleLayout module = moduleLayouts.get(i);
             modeButton.button().setX(module.rect().left());
             modeButton.button().setY(module.rect().top());
-            boolean chain = BeefToolModuleRegistry.ENHANCED_CHAIN_MINING.equals(module.id());
-            modeButton.button().setWidth(module.rect().width() - (chain ? GEAR_SIZE + 3 : 0));
+            boolean hasSettings = BeefToolModuleRegistry.ENHANCED_CHAIN_MINING.equals(module.id())
+                    || BeefToolModuleRegistry.BEEF_AOE_DAMAGE.equals(module.id());
+            modeButton.button().setWidth(module.rect().width() - (hasSettings ? GEAR_SIZE + 3 : 0));
             modeButton.button().setHeight(module.rect().height());
             modeButton.button().visible = intersectsContent(module.rect());
             modeButton.button().active = !awaitingLayout;
             modeButton.button().setMessage(buttonMessage(modeButton.id()));
         }
-        if (chainSettingsButton != null) {
-            ModuleLayout module = findModule(BeefToolModuleRegistry.ENHANCED_CHAIN_MINING);
-            chainSettingsButton.visible = module != null && intersectsContent(module.rect());
-            chainSettingsButton.active = !awaitingLayout;
-            if (module != null) {
-                Rect rect = chainGroupGearRect(module);
-                chainSettingsButton.setX(rect.left()); chainSettingsButton.setY(rect.top());
-            }
+        positionSettingsButton(chainSettingsButton, BeefToolModuleRegistry.ENHANCED_CHAIN_MINING);
+        positionSettingsButton(areaDamageSettingsButton, BeefToolModuleRegistry.BEEF_AOE_DAMAGE);
+    }
+
+    private void positionSettingsButton(PressableAE2Button button, String id) {
+        if (button == null) return;
+        ModuleLayout module = findModule(id);
+        button.visible = !editing && module != null && intersectsContent(module.rect());
+        button.active = !awaitingLayout;
+        if (module != null) {
+            Rect rect = chainGroupGearRect(module);
+            button.setX(rect.left());
+            button.setY(rect.top());
         }
     }
 
@@ -1134,6 +1143,8 @@ public class ModeWheelScreen extends Screen {
                         if (modeButton.button().visible) modeButton.button().render(graphics, mouseX, mouseY, partialTick);
                     }
                     drawChainGroupGear(graphics, mouseX, mouseY);
+                    if (areaDamageSettingsButton != null && areaDamageSettingsButton.visible)
+                        areaDamageSettingsButton.render(graphics, mouseX, mouseY, partialTick);
                 }
             } finally {
                 graphics.disableScissor();
@@ -1357,6 +1368,12 @@ public class ModeWheelScreen extends Screen {
         // 连锁挖掘模块右端的齿轮：进入「连锁等价组」编辑子界面。
         // 必须在 super.mouseClicked 之前拦截，否则点击会被模块按钮先吃掉。
         if (!editing && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+            ModuleLayout areaModule = findModule(BeefToolModuleRegistry.BEEF_AOE_DAMAGE);
+            if (areaModule != null && intersectsContent(areaModule.rect())
+                    && chainGroupGearRect(areaModule).contains(mouseX, mouseY)) {
+                minecraft.setScreen(UselessConfigScreen.forAreaDamage(this));
+                return true;
+            }
             ModuleLayout chainModule = findModule(BeefToolModuleRegistry.ENHANCED_CHAIN_MINING);
             if (chainModule != null && intersectsContent(chainModule.rect())
                     && chainGroupGearRect(chainModule).contains(mouseX, mouseY)) {

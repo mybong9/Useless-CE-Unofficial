@@ -17,7 +17,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 <!-- runtime-dependencies:start -->
 ## 运行环境与依赖版本
 
-对应发布版本：**1.4.12**。Minecraft **1.20.1 / Forge**，Java **17+**。
+对应发布版本：**1.4.13**。Minecraft **1.20.1 / Forge**，Java **17+**。
 以下范围依据发布 JAR 的加载声明，其他模组仍需满足各自前置要求。
 
 ### 必需前置
@@ -26,7 +26,7 @@ Minecraft **1.20.1**, **Forge**, mod ID `useless_mod`.
 | --- | --- | --- |
 | `forge` | `[47,)` | 客户端、服务端 |
 | `useless_core` | `[1.0.14,)` | 客户端、服务端 |
-| `minecraft` | `[1.20.1]` | 客户端、服务端 |
+| `minecraft` | `[1.20.1,)` | 客户端、服务端 |
 | `ae2` | `[15.0.0,)` | 客户端、服务端 |
 
 ### 可选联动
