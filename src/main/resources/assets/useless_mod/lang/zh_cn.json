@@ -1,4 +1,8 @@
 {
+  "gui.useless_mod.wireless_logistics.ae_bound_hint": "直接连接手杖已绑定的 AE 网络；输入从网络取出，输出存入网络",
+  "gui.useless_mod.wireless_logistics.ae_unbound_hint": "先用手杖绑定 AE 无线访问点，再打开物流设置；容器无需额外源端",
+  "gui.useless_mod.wireless_logistics.flow.both": "输入输出",
+  "gui.useless_mod.wireless_logistics.edit_direction": "编辑：%s",
   "gui.useless_mod.staff_ui.area_damage_settings": "范围伤害设置",
   "gui.useless_mod.wireless_logistics.settings": "设置 / 改名",
   "item.useless_mod.omniversal_pattern_converter": "万象样板转换器",

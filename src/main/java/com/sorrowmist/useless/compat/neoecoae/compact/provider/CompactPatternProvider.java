@@ -6,6 +6,8 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
 import cn.dancingsnow.neoecoae.api.ECOPatternInsertionResult;
+import cn.dancingsnow.neoecoae.api.me.provider.ECOBatchDispatchContext;
+import java.math.BigInteger;
 import cn.dancingsnow.neoecoae.blocks.entity.crafting.ECOCraftingPatternBusBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.crafting.ECOCraftingSystemBlockEntity;
 import cn.dancingsnow.neoecoae.crafting.execution.fastpath.ECOBatchCraftingRequest;
@@ -43,6 +45,30 @@ public final class CompactPatternProvider extends ECOCraftingPatternBusBlockEnti
 
     public boolean isEmpty() { return buses.isEmpty(); }
     public List<ECOCraftingPatternBusBlockEntity> buses() { return List.copyOf(buses); }
+
+    // The aggregate provider has no native cluster. Prepare and dispatch on the bus that owns the pattern.
+    @Override
+    public Preparation eco$prepareFastPath(ECOBatchDispatchContext context) {
+        Preparation best = null;
+        for (var bus : buses) {
+            if (!bus.getAvailablePatterns().contains(context.execution().details())) continue;
+            var preparation = bus.eco$prepareFastPath(context);
+            if (preparation != null && (best == null || preparation.capacity() > best.capacity())) {
+                best = preparation;
+            }
+        }
+        return best;
+    }
+
+    @Override
+    public ExactPreparation eco$prepareExactFastPath(ECOBatchDispatchContext context, BigInteger count) {
+        for (var bus : buses) {
+            if (!bus.getAvailablePatterns().contains(context.execution().details())) continue;
+            var preparation = bus.eco$prepareExactFastPath(context, count);
+            if (preparation != null) return preparation;
+        }
+        return null;
+    }
     @Override public void onReady() {}
     @Override public IGrid getGrid() { return host.getMainNode().getGrid(); }
     @Override public ECOCraftingSystemBlockEntity getCraftingController() { return host; }

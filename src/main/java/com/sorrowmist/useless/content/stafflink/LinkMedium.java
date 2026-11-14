@@ -114,6 +114,14 @@ public enum LinkMedium {
         return this;
     }
 
+    /** The ordinary container capability corresponding to this ME resource. */
+    public LinkMedium containerMedium() {
+        for (LinkMedium candidate : values()) {
+            if (candidate.family == family && !candidate.isAe()) return candidate;
+        }
+        return this;
+    }
+
     /** 当前环境是否支持这种资源。可选集成缺失时界面跳过、服务端拒绝。 */
     public boolean isSupported() {
         return switch (this) {

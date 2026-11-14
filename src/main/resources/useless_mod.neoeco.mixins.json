@@ -10,7 +10,8 @@
     "NeoEcoSubmissionScopeMixin",
     "NeoEcoPatternBusCapacityMixin",
     "CompactInterfaceRpcMixin",
-    "CompactInterfaceMenuDataMixin"
+    "CompactInterfaceMenuDataMixin",
+    "CompactPatternPreviewMixin"
   ],
   "injectors": {
     "defaultRequire": 1

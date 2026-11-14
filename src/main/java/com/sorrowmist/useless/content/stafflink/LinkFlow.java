@@ -12,7 +12,8 @@ public enum LinkFlow {
     /** 吸收：接收同线路 RELEASE 端推来的资源。 */
     ABSORB("gui.useless_mod.wireless_logistics.flow.absorb"),
     /** 释放：把自身库存推给同线路的 ABSORB 端。 */
-    RELEASE("gui.useless_mod.wireless_logistics.flow.release");
+    RELEASE("gui.useless_mod.wireless_logistics.flow.release"),
+    BOTH("gui.useless_mod.wireless_logistics.flow.both");
 
     private final String translationKey;
 
@@ -25,6 +26,6 @@ public enum LinkFlow {
     }
 
     public LinkFlow next() {
-        return this == ABSORB ? RELEASE : ABSORB;
+        return values()[(ordinal() + 1) % values().length];
     }
 }

@@ -70,6 +70,7 @@ public record StaffLinkCyclePacket(int delta) implements CoreCustomPacketPayload
                     Math.max(1, ids.size()));
             StaffLinkNetwork network = StaffLinkManager.activeNetwork(player.server, ownerId);
             if (network != null) {
+                StaffLinkManager.captureAeAnchor(player, network);
                 // 界面开着时要跟着换一张网络，否则后续的编辑还是打到旧网络上。
                 // 服务端菜单也必须换：所有编辑包都按菜单里的 networkId 寻址。
                 if (player.containerMenu instanceof StaffLinkMenu menu) {

@@ -139,10 +139,10 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     private static final int FILTER_LIMIT_MAX_CHARS = 8;
     /** 面板底部按钮行：高度、宽度与横向起点（两个按钮整体居中）。 */
     private static final int FILTER_BUTTON_HEIGHT = 20;
-    private static final int FILTER_PANEL_BUTTON_WIDTH = 90;
-    private static final int FILTER_PANEL_BUTTON_GAP = 12;
+    private static final int FILTER_PANEL_BUTTON_WIDTH = 64;
+    private static final int FILTER_PANEL_BUTTON_GAP = 8;
     private static final int FILTER_PANEL_BUTTON_X = (FILTER_PANEL_WIDTH
-            - FILTER_PANEL_BUTTON_WIDTH * 2 - FILTER_PANEL_BUTTON_GAP) / 2;
+            - FILTER_PANEL_BUTTON_WIDTH * 3 - FILTER_PANEL_BUTTON_GAP * 2) / 2;
     /** 按钮行 y：格子网格底(87) + 6 间隙。 */
     private static final int FILTER_PANEL_BUTTON_Y = 116;
     /**
@@ -225,7 +225,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     /** 下拉里的候选类型；环境不变，{@link #init()} 里算一次就够。 */
     private List<LinkMedium> mediumOptions = List.of();
     private UiButton enabledButton;
-    private UiButton sideButton;
+    private UiButton sideButton, directionEditButton;
     private UiButton prevNetworkButton;
     private UiButton nextNetworkButton;
     private UiButton newNetworkButton;
@@ -239,6 +239,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
        super.render() 画到底层 UI 之下。事件也要手动转发，见 mouseClicked/mouseReleased。 */
     private UiButton closeFilterButton;
     private UiButton clearFilterButton;
+    private UiButton filterDirectionButton;
 
     private EditBox networkNameField;
     private EditBox searchField;
@@ -356,7 +357,10 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
         flowButton = addRenderableWidget(new UiButton(
                 leftPos + CONTENT_LEFT, topPos + ROW_SECOND_Y, FLOW_WIDTH, ROW_HEIGHT, Component.empty(),
-                button -> edit(config -> withFlow(config, config.flow().next()))));
+                button -> edit(config -> withFlow(config,
+                        config.flow() == LinkFlow.RELEASE && (config.medium().family() == ResourceFamily.STRESS
+                                || config.medium().family() == ResourceFamily.PRESSURE)
+                                ? LinkFlow.ABSORB : config.flow().next()))));
         mediumButton = addRenderableWidget(new UiButton(
                 leftPos + MEDIUM_BUTTON_X, topPos + ROW_SECOND_Y,
                 FLOW_WIDTH - 54, ROW_HEIGHT, Component.empty(),
@@ -365,14 +369,24 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
                 leftPos + MEDIUM_BUTTON_X + FLOW_WIDTH - 50, topPos + ROW_SECOND_Y, 50, ROW_HEIGHT,
                 Component.empty(), button -> edit(config -> new StaffLinkRoute(
                         config.anchor(), config.route(), config.enabled(), config.flow(), config.medium().toggleAe(),
-                        config.amount(), config.interval(), config.side(), config.weight(), config.filter()))));
+                        config.amount(), config.interval(), config.side(), config.weight(), config.filter(),
+                        config.outputSide(), config.outputFilter()))));
         enabledButton = addRenderableWidget(new UiButton(
                 leftPos + CONTENT_LEFT, topPos + ROW_THIRD_Y, FLOW_WIDTH, ROW_HEIGHT,
                 Component.empty(), button -> edit(config -> withEnabled(config, !config.enabled()))));
 
         sideButton = addRenderableWidget(new UiButton(
                 leftPos + MEDIUM_BUTTON_X, topPos + ROW_THIRD_Y, SIDE_WIDTH, ROW_HEIGHT, Component.empty(),
-                button -> edit(config -> withSide(config, nextSide(config.side())))));
+                button -> edit(config -> menu.isEditingOutput()
+                        ? config.withOutput(nextSide(config.outputSide()), config.outputFilter())
+                        : withSide(config, nextSide(config.side())))));
+        directionEditButton = addRenderableWidget(new UiButton(
+                leftPos + MEDIUM_BUTTON_X + SIDE_WIDTH + 4, topPos + ROW_THIRD_Y,
+                122, ROW_HEIGHT, Component.empty(), button -> {
+                    menu.toggleFilterDirection();
+                    controlSignature = "";
+                    updateControls();
+                }));
 
         networkNameField = addTextField(NETWORK_FIELD_X, NETWORK_ROW_Y, NETWORK_FIELD_WIDTH,
                 Component.translatable("gui.useless_mod.wireless_logistics.network_name_hint"),
@@ -454,6 +468,13 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
                 filterPanelClearX(), filterPanelClearY(), FILTER_PANEL_BUTTON_WIDTH, FILTER_BUTTON_HEIGHT,
                 Component.translatable("gui.useless_mod.wireless_logistics.filter_clear"),
                 button -> clearAllFilterSlots()));
+        filterDirectionButton = addWidget(new UiButton(
+                filterPanelX() + FILTER_PANEL_BUTTON_X, filterPanelClearY(),
+                FILTER_PANEL_BUTTON_WIDTH, FILTER_BUTTON_HEIGHT, Component.empty(), button -> {
+                    menu.toggleFilterDirection();
+                    controlSignature = "";
+                    updateControls();
+                }));
         applyAllButton.primary(); dissolveButton.destructive();
         inventoryButton=addRenderableWidget(new UiButton(leftPos+84,topPos+FILTER_Y,54,20,
                 playerInventoryTitle,b->{inventoryOpen=!inventoryOpen;rebuildWidgets();}));
@@ -497,6 +518,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     private void syncFilterPanelButtons() {
         closeFilterButton.visible = filterPanelOpen;
         clearFilterButton.visible = filterPanelOpen;
+        filterDirectionButton.visible = filterPanelOpen;
     }
 
     private void setFilterPanelOpen(boolean open) {
@@ -1251,6 +1273,11 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         aeButton.active = hasConfig && config.medium().toggleAe() != config.medium();
         enabledButton.active = hasConfig;
         sideButton.active = hasConfig;
+        directionEditButton.visible = advancedOpen && hasConfig && config.flow() == LinkFlow.BOTH;
+        directionEditButton.setMessage(Component.translatable("gui.useless_mod.wireless_logistics.edit_direction",
+                (menu.isEditingOutput() ? LinkFlow.RELEASE : LinkFlow.ABSORB).displayName()));
+        filterDirectionButton.setMessage(directionEditButton.getMessage());
+        filterDirectionButton.active = hasConfig && config.flow() == LinkFlow.BOTH;
         if (!hasConfig) {
             // 没选中线路时下拉没有意义，顺手收起来。
             mediumMenuOpen = false;
@@ -1275,7 +1302,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
                 filterFilledCount()));
         networkNameField.setEditable(true);
         nameField.setEditable(hasAnchor);
-        // 一般介质是「释放端发起搬运」，所以「数量 / 周期」只在释放端可编辑，吸收端的禁掉以免误解。
+        // 普通容器也可能接收 ME 网络的资源，因此两端都可设置数量和周期。
         // 应力<b>正好相反</b>：它的目标转速与旋转方向是每个输出端各自的事（同一条线路上
         // 不同机器可以转不同的速度），所以这两个框配在吸收端。
         // 气压同理：这一格是「接收端要调到多少气压」，属于接收端，所以也配在吸收端。
@@ -1283,7 +1310,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         boolean initiates = hasConfig && config.flow() == LinkFlow.RELEASE;
         boolean stress = hasConfig && config.medium().family() == ResourceFamily.STRESS;
         boolean pressure = hasConfig && config.medium().family() == ResourceFamily.PRESSURE;
-        boolean numbersEditable = (stress || pressure) ? !initiates : initiates;
+        boolean numbersEditable = hasConfig && (!(stress || pressure) || !initiates);
         weightField.active = hasConfig;
         amountField.active = numbersEditable;
         // 应力时这一格被方向按钮顶掉，输入框整个隐起来（它的值仍由同步逻辑维持，按钮改的就是它）。
@@ -1325,7 +1352,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         }
 
         String signature = hasConfig
-                ? config.flow() + "|" + config.medium() + "|" + config.enabled() + "|" + config.side()
+                ? config.flow() + "|" + config.medium() + "|" + config.enabled() + "|" + config.side() + "|" + config.outputSide() + "|" + menu.isEditingOutput()
                   + "|" + menu.getSelectedRoute()
                 : "none|" + menu.getSelectedRoute();
         if (signature.equals(controlSignature)) {
@@ -1347,14 +1374,19 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         mediumButton.setMessage(label("medium_label", config.medium().displayName()));
         aeButton.setMessage(Component.translatable("gui.useless_mod.wireless_logistics.ae_"
                 + (config.medium().isAe() ? "on" : "off")));
+        aeButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable(
+                menu.getSnapshot() != null && menu.getSnapshot().aeAnchor() != null
+                        ? "gui.useless_mod.wireless_logistics.ae_bound_hint"
+                        : "gui.useless_mod.wireless_logistics.ae_unbound_hint")));
         enabledButton.setMessage(label("enabled_label",
                 Component.translatable(config.enabled()
                         ? "gui.useless_mod.wireless_logistics.state_on"
                         : "gui.useless_mod.wireless_logistics.state_off")));
-        sideButton.setMessage(label("side_label", config.side() == null
+        Direction configuredSide = menu.isEditingOutput() ? config.outputSide() : config.side();
+        sideButton.setMessage(label("side_label", configuredSide == null
                 ? Component.translatable("gui.useless_mod.wireless_logistics.side.null")
                 : Component.translatable("gui.useless_mod.wireless_logistics.side."
-                        + config.side().getName())));
+                        + configuredSide.getName())));
     }
 
     private static void setFieldValue(EditBox field, String value) {
@@ -1445,6 +1477,9 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
         closeFilterButton.render(graphics, mouseX, mouseY, 0.0F);
         clearFilterButton.render(graphics, mouseX, mouseY, 0.0F);
+        filterDirectionButton.setX(filterPanelX() + FILTER_PANEL_BUTTON_X);
+        filterDirectionButton.setY(filterPanelClearY());
+        filterDirectionButton.render(graphics, mouseX, mouseY, 0.0F);
 
         // 面板自己的一套悬停提示；不走 super.render()，所以得单独调。
         // 详细面板开着时它整个压住了这两个按钮，按钮提示也别画（否则会浮在详细面板上）。
@@ -1653,7 +1688,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
             var route=menu.getConfig(anchor,menu.getSelectedRoute());
             if(route!=null && route.enabled()) {
                 int colour=route.flow()==LinkFlow.RELEASE?0xff7fd6a4:0xff75c9ff;
-                graphics.drawString(font,route.flow()==LinkFlow.RELEASE?"‹":"›",x+2,y+12,colour,false);
+                graphics.drawString(font,route.flow()==LinkFlow.BOTH?"↔":route.flow()==LinkFlow.RELEASE?"‹":"›",x+2,y+12,colour,false);
             }
         }
         if(anchors.size()>LIST_VISIBLE_ROWS) {
@@ -2536,7 +2571,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
         menu.applyRoute(new StaffLinkRoute(
                 anchor, menu.getSelectedRoute(),
                 source.enabled(), source.flow(), source.medium(), source.amount(), source.interval(),
-                source.side(), source.weight(), source.filter()));
+                source.side(), source.weight(), source.filter(), source.outputSide(), source.outputFilter()));
         updateControls();
         showNotice(Component.translatable("gui.useless_mod.wireless_logistics.config_pasted"));
     }
@@ -2587,6 +2622,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
     @Override
     protected boolean clickContent(double mouseX, double mouseY, int button) {
+        if (jeiDragActive && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) return false;
         // 面板占满整个窗口，打开时它最优先：底层界面一个控件也不该收到这一下。
         if (filterPanelOpen) {
             if (button == 0) {
@@ -2676,6 +2712,7 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
             return handleDetailPanelClick(mouseX, mouseY, button);
         }
         if (closeFilterButton.mouseClicked(mouseX, mouseY, button)
+                || filterDirectionButton.mouseClicked(mouseX, mouseY, button)
                 || clearFilterButton.mouseClicked(mouseX, mouseY, button)) {
             return true;
         }
@@ -2700,15 +2737,17 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
             openDetailPanel(filterIndex);
             return true;
         }
+        if (button == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+            menu.setFilterSlot(filterIndex, LinkFilterSlot.EMPTY);
+            return true;
+        }
         if (button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             return true;
         }
         // 左键：按线路资源类型解释手上的东西——流体线路从容器里取出流体本身，
         // 解释不了就不动这一格（绝不把不匹配的东西塞进去）。空手 = 清掉这一格。
         ItemStack carried = menu.getCarried();
-        if (carried.isEmpty()) {
-            menu.setFilterSlot(filterIndex, LinkFilterSlot.EMPTY);
-        } else {
+        if (!carried.isEmpty()) {
             LinkFilterSlot marker = StaffLinkFilters.fromItem(menu.getSelectedMedium(), carried);
             if (marker != null) {
                 // 换标记时保留这一格原有的白名单/黑名单与条件。
@@ -2816,12 +2855,14 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
     @Override
     protected boolean releaseContent(double mouseX, double mouseY, int button) {
+        if (jeiDragActive && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) return false;
         if (button == 0 && draggingOverlay != 0) { draggingOverlay = 0; return true; }
         draggingAnchorScroll=false;
         // 面板按钮只进了 children，事件得手动转发，不然按下去会一直停在「按下」的视觉状态。
         if (closeFilterButton != null) {
             closeFilterButton.releaseVisualState();
             clearFilterButton.releaseVisualState();
+            filterDirectionButton.releaseVisualState();
             detailExcludeButton.releaseVisualState();
             detailOutOpButton.releaseVisualState();
             detailInOpButton.releaseVisualState();
@@ -2986,7 +3027,8 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
 
     /** 面板底部「关闭」按钮的屏幕坐标（两个按钮整体在面板内居中）。 */
     private int filterPanelCloseX() {
-        return filterPanelX() + FILTER_PANEL_BUTTON_X;
+        return filterPanelX() + FILTER_PANEL_BUTTON_X
+                + 2 * (FILTER_PANEL_BUTTON_WIDTH + FILTER_PANEL_BUTTON_GAP);
     }
 
     private int filterPanelCloseY() {
@@ -3057,7 +3099,8 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     private static StaffLinkRoute withFlow(StaffLinkRoute config, LinkFlow flow) {
         return new StaffLinkRoute(config.anchor(), config.route(), config.enabled(), flow,
                 config.medium(), config.amount(), config.interval(), config.side(),
-                config.weight(), config.filter());
+                config.weight(), config.filter(),
+                config.outputSide(), config.outputFilter());
     }
 
     private static StaffLinkRoute withMedium(StaffLinkRoute config, LinkMedium medium) {
@@ -3071,7 +3114,8 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
                 stress ? StaffLinkRoute.STRESS_DEFAULT_RPM
                         : pressure ? StaffLinkRoute.PRESSURE_DEFAULT_MBAR : config.amount(),
                 stress ? StaffLinkRoute.STRESS_CLOCKWISE : config.interval(),
-                config.side(), config.weight(), pruneFilter(config.filter(), medium));
+                config.side(), config.weight(), pruneFilter(config.filter(), medium),
+                config.outputSide(), pruneFilter(config.outputFilter(), medium));
     }
 
     /**
@@ -3113,19 +3157,19 @@ public final class StaffLinkScreen extends FittedContainerScreen<StaffLinkMenu> 
     private static StaffLinkRoute withEnabled(StaffLinkRoute config, boolean enabled) {
         return new StaffLinkRoute(config.anchor(), config.route(), enabled, config.flow(),
                 config.medium(), config.amount(), config.interval(), config.side(),
-                config.weight(), config.filter());
+                config.weight(), config.filter(), config.outputSide(), config.outputFilter());
     }
 
     private static StaffLinkRoute withSide(StaffLinkRoute config, Direction side) {
         return new StaffLinkRoute(config.anchor(), config.route(), config.enabled(), config.flow(),
                 config.medium(), config.amount(), config.interval(), side,
-                config.weight(), config.filter());
+                config.weight(), config.filter(), config.outputSide(), config.outputFilter());
     }
 
     private static StaffLinkRoute withNumbers(StaffLinkRoute config, int weight, long amount, int interval) {
         return new StaffLinkRoute(config.anchor(), config.route(), config.enabled(), config.flow(),
                 config.medium(), amount, interval, config.side(),
-                weight, config.filter());
+                weight, config.filter(), config.outputSide(), config.outputFilter());
     }
 
     /** 顺时针 ↔ 逆时针。 */

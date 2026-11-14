@@ -209,10 +209,9 @@ public final class StaffLinkTargets {
     /** 流体端点：优先 AE2 局部通用库存，退回原生 {@code IFluidHandler}。理由同上。 */
     @Nullable
     private static LongFluidHandler genericFluids(Level level, BlockPos pos, @Nullable Direction side) {
-        LongFluidHandler generic = AeGenericInvCompatLoader.fluidEndpoint(level, pos, side);
-        return generic != null
-                ? generic
-                : fluids(capability(level, CoreCapabilities.FluidHandler.BLOCK, pos, side, LinkMedium.FLUID));
+        LongFluidHandler nativeTank = fluids(capability(level, CoreCapabilities.FluidHandler.BLOCK,
+                pos, side, LinkMedium.FLUID));
+        return nativeTank != null ? nativeTank : AeGenericInvCompatLoader.fluidEndpoint(level, pos, side);
     }
 
     /**
@@ -372,7 +371,8 @@ public final class StaffLinkTargets {
         if (from == null || limit <= 0L || source.medium().family() != target.medium().family()) {
             return 0L;
         }
-        if (source.medium() == LinkMedium.AE_ITEM && !source.hasApplicableFilter()) {
+        if (source.medium() == LinkMedium.AE_ITEM
+                && !source.hasApplicableFilter() && !target.hasApplicableFilter()) {
             return 0L;
         }
         List<LinkFilterSlot> sourceFilter = source.activeFilters();

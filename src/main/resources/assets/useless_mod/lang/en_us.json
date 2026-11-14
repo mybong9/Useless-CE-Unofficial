@@ -1,4 +1,8 @@
 {
+  "gui.useless_mod.wireless_logistics.ae_bound_hint": "Use the staff-linked ME network directly: input extracts, output inserts",
+  "gui.useless_mod.wireless_logistics.ae_unbound_hint": "Link the staff to an ME wireless access point, then open logistics; no extra source container is needed",
+  "gui.useless_mod.wireless_logistics.flow.both": "Input / Output",
+  "gui.useless_mod.wireless_logistics.edit_direction": "Edit: %s",
   "gui.useless_mod.staff_ui.area_damage_settings": "Area Damage Settings",
   "gui.useless_mod.wireless_logistics.settings": "Settings / name",
   "item.useless_mod.omniversal_pattern_converter": "Omniversal Pattern Converter",

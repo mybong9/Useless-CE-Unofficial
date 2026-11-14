@@ -166,11 +166,11 @@ description='''这个mod可能很有用，但这个mod很有用不太可能。''
 #[features.${mod_id}]
 #openGLVersion="[3.2,)"
 
-# 20.5.0 provides the public CPU lifecycle/output-claim APIs and the new UI holder contract.
+# 20.5.7 provides the public CPU lifecycle/output-claim APIs, the long fluid tank and the new UI holder contract.
 [[dependencies.${mod_id}]]
 modId="neoecoae"
 mandatory=false
-versionRange="[20.5.1,)"
+versionRange="[20.5.7,)"
 ordering="AFTER"
 side="BOTH"
 

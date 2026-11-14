@@ -162,6 +162,7 @@ public final class JEIPlugin implements IModPlugin {
      */
     private static final class StaffLinkGhostHandler
             implements IGhostIngredientHandler<StaffLinkScreen> {
+        private StaffLinkScreen draggingScreen;
         @Override
         public <I> List<Target<I>> getTargetsTyped(StaffLinkScreen screen,
                                                    ITypedIngredient<I> ingredient,
@@ -185,6 +186,7 @@ public final class JEIPlugin implements IModPlugin {
             }
             // 真的要开始拖了（doStart=true）才点亮拖拽高亮；doStart=false 那次只是问「有没有目标」。
             if (doStart) {
+                draggingScreen = screen;
                 screen.setJeiDragActive(true);
             }
 
@@ -204,7 +206,8 @@ public final class JEIPlugin implements IModPlugin {
 
                     @Override
                     public void accept(I value) {
-                        screen.getMenu().setFilterSlot(slotIndex, marker);
+                        screen.getMenu().setFilterSlot(slotIndex,
+                                screen.getMenu().getFilterMirror().get(slotIndex).withMarker(marker));
                     }
                 });
             }
@@ -242,17 +245,24 @@ public final class JEIPlugin implements IModPlugin {
 
         @Override
         public void onComplete() {
+            if (draggingScreen != null) draggingScreen.setJeiDragActive(false);
+            draggingScreen = null;
         }
     }
 
     private static final class DimensionConfigGhostHandler
             implements IGhostIngredientHandler<DimensionConfigScreen> {
+        private DimensionConfigScreen draggingScreen;
         @Override
         public <I> List<Target<I>> getTargetsTyped(DimensionConfigScreen screen,
                                                    ITypedIngredient<I> ingredient,
                                                    boolean doStart) {
             ItemStack stack = ingredient.getItemStack().orElse(ItemStack.EMPTY);
-            if (!(stack.getItem() instanceof BlockItem)) return List.of();
+            if (!screen.acceptsJeiDrag() || !(stack.getItem() instanceof BlockItem)) return List.of();
+            if (doStart) {
+                draggingScreen = screen;
+                screen.setJeiDragActive(true);
+            }
 
             List<Target<I>> targets = new ArrayList<>(DimensionConfigMenu.GHOST_SLOT_COUNT);
             for (int index = 0; index < DimensionConfigMenu.GHOST_SLOT_COUNT; index++) {
@@ -279,6 +289,8 @@ public final class JEIPlugin implements IModPlugin {
 
         @Override
         public void onComplete() {
+            if (draggingScreen != null) draggingScreen.setJeiDragActive(false);
+            draggingScreen = null;
         }
     }
 

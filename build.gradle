@@ -178,8 +178,8 @@ dependencies {
     }
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     // Local Forge 1.20.1 Neo ECO release supplied with this workspace.
-    compileOnly fg.deobf('local.neoecoae:neoecoae:20.5.1')
-    runtimeOnly fg.deobf('local.neoecoae:neoecoae:20.5.1')
+    compileOnly fg.deobf('local.neoecoae:neoecoae:20.5.7')
+    runtimeOnly fg.deobf('local.neoecoae:neoecoae:20.5.7')
     compileOnly fg.deobf('local.neoecoae:Registrate:MC1.20-1.3.11')
     compileOnly files('libs/mixinextras-common-0.5.5.jar')
     implementation fg.deobf('maven.modrinth:ldlib:mc1.20.1-1.0.52.a-forge')

@@ -44,7 +44,7 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
      */
     private static final int PREVIEW_BACKDROP_COLOR = 0xFF000000;
 
-    private final PlatformPreview preview =
+    private PlatformPreview preview =
             new PlatformPreview(VIEW_W, TOP_VIEW_H, VIEW_W, SIDE_VIEW_H);
 
     private EditBox layersField;
@@ -78,6 +78,15 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
     private PressableAE2Button confirmImportButton;
     private PressableAE2Button cancelImportButton;
     private Slot pressedSlot;
+    private boolean jeiDragActive;
+
+    public boolean acceptsJeiDrag() {
+        return !previewOpen && pendingImport == null;
+    }
+
+    public void setJeiDragActive(boolean active) {
+        jeiDragActive = active;
+    }
     private boolean updatingFields;
     /** 预览弹窗是否打开；打开时独占点击与 ESC。 */
     private boolean previewOpen;
@@ -99,6 +108,8 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
 
     @Override
     protected void init() {
+        // JEI can return to this same screen after removed() released its textures.
+        if (preview.isClosed()) preview = new PlatformPreview(VIEW_W, TOP_VIEW_H, VIEW_W, SIDE_VIEW_H);
         super.init();
         layersField = createNumberField(106, 36, 52,
                 Component.translatable("gui.useless_mod.dimension_config.layers"),
@@ -230,7 +241,7 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
         DimensionGenerationConfig config = menu.createConfiguration()
                 .map(DimensionGenerationConfig::normalized)
                 .orElse(null);
-        preview.refresh(style, config);
+        preview.refresh(style == null ? PlatformStyle.STYLE_1 : style, config);
     }
 
     private PressableAE2Button addStepButton(int x, int y, String text, EditBox field,
@@ -796,6 +807,7 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (jeiDragActive && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) return false;
         // 覆盖层独占点击：只转发给覆盖层自己的按钮，避免穿透到底下的槽位与控件。
         if (pendingImport != null) {
             confirmImportButton.mouseClicked(mouseX, mouseY, button);
@@ -817,6 +829,7 @@ public final class DimensionConfigScreen extends AbstractContainerScreen<Dimensi
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (jeiDragActive && button == GLFW.GLFW_MOUSE_BUTTON_LEFT) return false;
         // 覆盖层按钮不在 renderables 里，事件也要手动转发，否则按下后松手不会触发。
         if (pendingImport != null) {
             confirmImportButton.mouseReleased(mouseX, mouseY, button);

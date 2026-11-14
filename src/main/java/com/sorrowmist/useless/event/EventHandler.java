@@ -846,7 +846,6 @@ public class EventHandler {
      * 右键 ME 设备默认会开方块 GUI，只有取消本次交互才拦得住。
      * 潜行时直接让位给既有的「Shift + 右键绑定无线访问点 / 自动装配合金炉」。</p>
      */
-    @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onAeConnectInteract(PlayerInteractEvent.RightClickBlock event) {
         if (event.isCanceled() || event.getEntity().isShiftKeyDown()) return;
 

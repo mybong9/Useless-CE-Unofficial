@@ -70,7 +70,8 @@ public final class CompactInterfaceAttachment<C extends NECluster<C>> {
         var grid = shadow.getMainNode().getGrid();
         long layout = 1, contents = 1;
         var visible = new java.util.ArrayList<cn.dancingsnow.neoecoae.blocks.entity.crafting.ECOCraftingPatternBusBlockEntity>();
-        for (var bus : crafting.getPatternDomainBuses()) {
+        for (var bus : crafting.getPatternBuses()) {
+            if (!(bus instanceof com.sorrowmist.useless.compat.neoecoae.compact.exposed.ExposedPatternBusBlockEntity)) continue;
             var node = bus.getGridNode();
             if (grid == null || node == null || node.getGrid() != grid || bus.isRemoved()) continue;
             visible.add(bus);

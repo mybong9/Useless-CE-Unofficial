@@ -8,6 +8,7 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.orientation.BlockOrientation;
+import cn.dancingsnow.neoecoae.util.LongFluidTank;
 import cn.dancingsnow.neoecoae.api.ECOTier;
 import cn.dancingsnow.neoecoae.api.ECOPatternInsertionResult;
 
@@ -165,7 +166,7 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
                 NeoEcoCompactRegistry.SHADOW_FLUID_OUTPUT_HATCH.get(), pos, blockState);
         fluidInputHatch.tank = CompactF9FluidHandler.createFleetTank(HOSTS, this::setChanged);
         fluidOutputHatch.tank = CompactF9FluidHandler.createFleetTank(HOSTS, this::setChanged);
-        fluidHandler = new CompactF9FluidHandler(fluidInputHatch.tank, fluidOutputHatch.tank);
+        fluidHandler = new CompactF9FluidHandler((LongFluidTank) fluidInputHatch.tank, (LongFluidTank) fluidOutputHatch.tank);
         getMainNode().setFlags(GridFlags.REQUIRE_CHANNEL);
         // ECO 20 identifies batch providers by its native pattern-bus class.
         getMainNode()
@@ -217,8 +218,75 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
 
 
     @Override
+    public int getMaxBuildLength() {
+        // 与 8 联满配 ECO 完全一致：扩张上限 = craftingSystemMaxLength - 4。
+        int configured = cn.dancingsnow.neoecoae.config.NEConfig.craftingSystemMaxLength - 4;
+        return configured > 0 ? configured : Math.max(1, super.getMaxBuildLength());
+    }
+
+    @Override
     public int getSelectedBuildLength() {
         return getMaxBuildLength();
+    }
+
+    // ===== 创造级并行容量 =====
+    // 主机的 dispatch 与 capability 快照都会读这些方法；阴影主机与影子 worker 仍负责
+    // 提供真实的 FX 通道，这里只解除每台 worker 的线程上限。
+
+    @Override
+    public int getThreadObjectCapacityForWorker(
+            cn.dancingsnow.neoecoae.blocks.entity.crafting.ECOCraftingWorkerBlockEntity worker) {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int getDispatchThreadCapacity() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int getTotalWorkerThreadCapacity() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public int getPooledParallelism() {
+        return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public long getLocalFtParallelCapacity() {
+        return Long.MAX_VALUE;
+    }
+
+    @Override
+    public net.minecraftforge.fluids.FluidStack getDisplayedCoolantFluid() {
+        var fluid = fluidInputHatch.tank.getFluid();
+        return fluid.isEmpty() ? super.getDisplayedCoolantFluid() : fluid.copy();
+    }
+
+    @Override
+    public int getDisplayedCoolantAmount() {
+        return fluidInputHatch.tank.getFluidAmount();
+    }
+
+    @Override
+    public int getDisplayedCoolantCapacity() {
+        return fluidInputHatch.tank.getCapacity();
+    }
+
+    private long lastVirtualPowerTick = Long.MIN_VALUE;
+
+    @Override
+    public cn.dancingsnow.neoecoae.gui.crafting.CraftingControllerPanelState getCraftingControllerPanelState() {
+        var state = super.getCraftingControllerPanelState();
+        if (!state.formed() || level == null || !isFullVirtualCraftingMode()) return state;
+        // A virtual batch pays once per tick, regardless of how many FX lanes it occupies.
+        long now = level.getGameTime();
+        int energy = lastVirtualPowerTick == now || lastVirtualPowerTick == now - 1 ? 1000 : 0;
+        return new cn.dancingsnow.neoecoae.gui.crafting.CraftingControllerPanelState(
+                state.formed(), state.hostTier(), state.fxCells(), state.upperCores(), state.lowerCores(),
+                state.coolantOverlay(), state.switchOverlay(), state.queuePermille(), energy);
     }
 
     @Override
@@ -239,19 +307,12 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
         }
     }
 
-    /**
-     * AE2 网格 ticker 通道（ECO 的合成主机本身就是 {@code IGridTickable}）。
-     *
-     * <p>先跑 ECO 自己的合成 tick，再驱动我们的影子工作核心；两个 tick 来源靠
-     * {@link #lastCompactTick} 去重，保证每条 FX 通道每个游戏 tick 只推进一次。</p>
-     */
     @Override
     public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
-        TickRateModulation rate = super.tickingRequest(node, ticksSinceLastCall);
         if (level instanceof ServerLevel serverLevel) {
             compactServerTick(serverLevel);
         }
-        return rate;
+        return TickRateModulation.IDLE;
     }
 
     /** 两个 tick 来源共用；同一个游戏 tick 只处理一次。 */
@@ -281,9 +342,12 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
             }
         }
         compactInterface.tick();
-        // 影子主机没有独立网格 ticker，仍由 ECO 原生冷却逻辑补充各自的内部缓冲。
-        for (int index = 1; index < fleet.size(); index++) {
-            fleet.get(index).getController().tickingRequest(null, 1);
+        // Refill from the shared tanks before advancing workers, even after AE idles the controller.
+        if (!fleet.isEmpty() && fluidInputHatch.tank.getFluidAmount() > 0) {
+            super.tickingRequest(null, 1);
+            for (int index = 1; index < fleet.size(); index++) {
+                fleet.get(index).getController().tickingRequest(null, 1);
+            }
         }
         tickShadowWorkers();
     }
@@ -343,8 +407,17 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
         for (CompactCraftingCluster member : fleet) {
             linkAll(member);
         }
-        NECraftingNetworkCluster network = new NECraftingNetworkCluster();
+        NECraftingNetworkCluster network = new NECraftingNetworkCluster() {
+            @Override
+            public boolean tryConsumeVirtualCraftingPower(long tick, java.util.function.DoublePredicate extract) {
+                boolean paid = super.tryConsumeVirtualCraftingPower(tick, extract);
+                if (paid) lastVirtualPowerTick = level.getGameTime();
+                return paid;
+            }
+        };
         List<NECraftingCluster> members = new ArrayList<>(fleet);
+        boolean overclocked = isLocallyOverclocked();
+        boolean activeCooling = isLocallyActiveCooling();
         network.configure(members);
         for (CompactCraftingCluster member : fleet) {
             // 走注入入口：ECO 的逻辑网络管理器会把它不认识的集群置空，普通 setter 会被我们忽略。
@@ -352,6 +425,8 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
         }
 
         this.compactNetworkCluster = network;
+        network.setOverclocked(overclocked);
+        network.setActiveCooling(activeCooling);
 
         for (ShadowPatternBusBlockEntity bus : shadowBuses) bus.setPersistenceListener(() -> {
             patternStoreDirty = true;
@@ -922,5 +997,7 @@ public class CompactF9BlockEntity extends ECOCraftingSystemBlockEntity
     @Override public net.minecraft.world.level.block.entity.BlockEntity compactInterfaceTarget() {
         return compactInterface.interfaceTarget();
     }
+
+
 
 }

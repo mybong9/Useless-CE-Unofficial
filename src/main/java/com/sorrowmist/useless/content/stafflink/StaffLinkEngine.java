@@ -139,7 +139,7 @@ public final class StaffLinkEngine {
             }
             int[] slots = backoffByAnchor.get(anchor);
             if (slots == null) {
-                slots = new int[StaffLinkNetwork.ROUTE_COUNT];
+                slots = new int[StaffLinkNetwork.ROUTE_COUNT * 2];
                 backoffByAnchor.put(anchor, slots);
             }
             slots[route] = backoff;
@@ -227,7 +227,7 @@ public final class StaffLinkEngine {
         }
 
         private static long[] unscheduledSlots() {
-            long[] slots = new long[StaffLinkNetwork.ROUTE_COUNT];
+            long[] slots = new long[StaffLinkNetwork.ROUTE_COUNT * 2];
             Arrays.fill(slots, UNSCHEDULED);
             return slots;
         }
@@ -332,7 +332,7 @@ public final class StaffLinkEngine {
             for (StaffLinkNetwork network : networks) {
                 NetworkSchedule schedule = NODE_NEXT_RUN.get(network.id());
                 if (schedule != null) {
-                    schedule.pruneAgainst((anchor, route) -> network.routeAt(anchor, route) != null);
+                    schedule.pruneAgainst((anchor, route) -> network.routeAt(anchor, route % StaffLinkNetwork.ROUTE_COUNT) != null);
                 }
             }
             // 「上次命中的面」提示失手只会退回完整扫描、不会读错，清它纯粹是防止无限增长。
@@ -372,13 +372,27 @@ public final class StaffLinkEngine {
         @SuppressWarnings("unchecked")
         List<StaffLinkRoute>[] byRoute = new List[StaffLinkNetwork.ROUTE_COUNT];
         for (StaffLinkRoute route : network.routes()) {
+            ServerLevel anchorLevel = levelOf(server, route.anchor());
+            if (route.medium().isAe() && route.medium() != LinkMedium.AE_KEY
+                    && anchorLevel != null
+                    && usesLocalContainer(anchorLevel, route)) {
+                if (network.aeAnchor() != null) {
+                    runDirectAe(server, network, route, anchorLevel, now);
+                    continue;
+                }
+                // An explicit ME route can also supply an ordinary container.
+                route = new StaffLinkRoute(route.anchor(), route.route(), route.enabled(), route.flow(),
+                        route.medium().containerMedium(), route.amount(), route.interval(),
+                        route.side(), route.weight(), route.filter(), route.outputSide(), route.outputFilter());
+            }
             int index = route.route();
             List<StaffLinkRoute> bucket = byRoute[index];
             if (bucket == null) {
                 bucket = new ArrayList<>();
                 byRoute[index] = bucket;
             }
-            bucket.add(route);
+            bucket.add(route.flow() == LinkFlow.RELEASE ? route.forOutput() : route);
+            if (route.flow() == LinkFlow.BOTH) bucket.add(route.forOutput());
         }
 
         for (int routeIndex = 0; routeIndex < StaffLinkNetwork.ROUTE_COUNT; routeIndex++) {
@@ -513,6 +527,7 @@ public final class StaffLinkEngine {
             dueReleases.sort(BY_WEIGHT);
             absorbs.sort(BY_WEIGHT);
 
+            Map<GlobalPos, Long> received = new HashMap<>();
             for (StaffLinkRoute release : dueReleases) {
                 ServerLevel releaseLevel = levelOf(server, release.anchor());
                 if (releaseLevel == null) {
@@ -524,7 +539,8 @@ public final class StaffLinkEngine {
                 for (StaffLinkRoute absorb : absorbs) {
                     // 按 family 配对而不是按 medium：箱子（ITEM）与 AE 网络（AE_ITEM）
                     // 都是「物品」，能互相搬运；同一种资源类型自己配自己也照常成立。
-                    if (absorb.medium().family() == release.medium().family()) {
+                    if (!absorb.anchor().equals(release.anchor())
+                            && absorb.medium().family() == release.medium().family()) {
                         targets.add(absorb);
                     }
                 }
@@ -535,18 +551,86 @@ public final class StaffLinkEngine {
                     continue;
                 }
 
-                Distribution result = distribute(releaseLevel, release, targets, server);
+                Distribution result = distribute(releaseLevel, release, targets, server,
+                        network.id(), routeIndex, now, received);
                 // 按「这一轮到底搬动了没有」排下一轮：空转走指数退避，见 scheduleNextRun。
                 scheduleNextRun(network.id(), routeIndex, release.anchor(),
-                        now, release.interval(), result.moved() > 0L);
+                        now, release.interval(), result.moved() > 0L || result.receiverLimited());
+            }
+            for (StaffLinkRoute target : absorbs) {
+                if (received.containsKey(target.anchor())) {
+                    setNextRun(network.id(), routeIndex + StaffLinkNetwork.ROUTE_COUNT,
+                            target.anchor(), now + target.interval());
+                }
             }
         }
+    }
+
+    private static boolean usesLocalContainer(ServerLevel level, StaffLinkRoute route) {
+        var pos = route.anchor().pos();
+        // F9 is an ME node, but its coolant tanks are exposed as a local fluid capability.
+        if (route.medium() == LinkMedium.AE_FLUID && net.minecraftforge.fml.ModList.get().isLoaded("neoecoae")
+                && level.getBlockEntity(pos) instanceof com.sorrowmist.useless.compat.neoecoae.compact.entity.CompactF9BlockEntity) {
+            return true;
+        }
+        return !com.sorrowmist.useless.compat.ae.AeLogisticsCompatLoader.isEndpoint(level, pos);
+    }
+
+    private static void runDirectAe(MinecraftServer server, StaffLinkNetwork network,
+                                    StaffLinkRoute route, ServerLevel localLevel, long now) {
+        if (!route.enabled() || !route.medium().isSupported() || network.aeAnchor() == null) return;
+        ServerLevel aeLevel = levelOf(server, network.aeAnchor());
+        if (aeLevel == null || route.anchor().equals(network.aeAnchor())) return;
+        if (route.flow() != LinkFlow.ABSORB) {
+            transferDirectAe(network, route.forOutput(), localLevel, aeLevel, now, false);
+        }
+        if (route.flow() != LinkFlow.RELEASE) {
+            transferDirectAe(network, route, localLevel, aeLevel, now, true);
+        }
+    }
+
+    private static void transferDirectAe(StaffLinkNetwork network, StaffLinkRoute route,
+                                         ServerLevel localLevel, ServerLevel aeLevel, long now,
+                                         boolean input) {
+        int schedule = route.route() + (input ? StaffLinkNetwork.ROUTE_COUNT : 0);
+        if (now < nextRunAt(network.id(), schedule, route.anchor())) return;
+        StaffLinkRoute local = new StaffLinkRoute(route.anchor(), route.route(), true,
+                input ? LinkFlow.ABSORB : LinkFlow.RELEASE, route.medium().containerMedium(),
+                route.amount(), route.interval(), route.side(), route.weight(), route.filter());
+        StaffLinkRoute remote = new StaffLinkRoute(network.aeAnchor(), route.route(), true,
+                input ? LinkFlow.RELEASE : LinkFlow.ABSORB, route.medium(),
+                route.amount(), route.interval(), null, 0, List.of());
+        StaffLinkRoute source = input ? remote : local;
+        StaffLinkRoute target = input ? local : remote;
+        ServerLevel sourceLevel = input ? aeLevel : localLevel;
+        ServerLevel targetLevel = input ? localLevel : aeLevel;
+        Object from = StaffLinkTargets.resolveSource(sourceLevel, source);
+        long moved;
+        if (route.medium().family() == ResourceFamily.PRESSURE) {
+            Object to = StaffLinkTargets.resolve(targetLevel, target.anchor().pos(), target.side(), target.medium());
+            moved = from instanceof LongPressureHandler pressureSource && to instanceof LongPressureHandler pressureTarget
+                    ? moveDirectPressure(pressureSource, pressureTarget, route.amount()) : 0;
+        } else {
+            moved = StaffLinkTargets.transfer(from, sourceLevel, source, targetLevel, target, route.amount());
+        }
+        scheduleNextRun(network.id(), schedule, route.anchor(), now, route.interval(), moved > 0);
+    }
+
+    private static long moveDirectPressure(LongPressureHandler source, LongPressureHandler target, long pressure) {
+        long need = target.volume() > 0
+                ? Math.round(pressure / 1000.0D * target.volume()) - target.stored() : Long.MAX_VALUE;
+        if (need < 0) return Math.abs(target.setAirTo(target.stored() + need, false));
+        long accepted = target.receive(Math.min(need, source.extract(need, true)), true);
+        long extracted = source.extract(accepted, false);
+        long moved = target.receive(extracted, false);
+        if (moved < extracted) source.receive(extracted - moved, false);
+        return moved;
     }
 
     // ------------------------------------------------------------------ 分配
 
     /** 一次分配的结果：搬走多少。 */
-    private record Distribution(long moved) {
+    private record Distribution(long moved, boolean receiverLimited) {
     }
 
     /**
@@ -563,25 +647,42 @@ public final class StaffLinkEngine {
      * 要么把数量调小，要么给接收端设过滤让它们各取所需。</p>
      */
     private static Distribution distribute(ServerLevel releaseLevel, StaffLinkRoute release,
-                                           List<StaffLinkRoute> targets, MinecraftServer server) {
+                                           List<StaffLinkRoute> targets, MinecraftServer server,
+                                           UUID networkId, int routeIndex, long now, Map<GlobalPos, Long> received) {
         // 源端点解析一次，所有接收端共用。AE 端点每次解析都要「取方块实体 → 取能力」并新建
         // 一份端点实例，按接收端个数重复付这笔钱没有意义；顺带也让端点内部的整网快照
         // （只在无过滤器的扫描路径上才会用到）在多个接收端之间保持一致。
         Object from = StaffLinkTargets.resolveSource(releaseLevel, release);
         if (from == null) {
-            return new Distribution(0L);
+            return new Distribution(0L, false);
         }
         long amount = release.amount();
         long moved = 0;
+        boolean receiverLimited = false;
 
         for (StaffLinkRoute target : targets) {
             ServerLevel targetLevel = levelOf(server, target.anchor());
             if (targetLevel == null) {
                 continue;
             }
-            moved += StaffLinkTargets.transfer(from, releaseLevel, release, targetLevel, target, amount);
+            boolean limitReceiver = release.medium().isAe() || target.medium().isAe() || target.flow() == LinkFlow.BOTH;
+            long limit = amount;
+            if (limitReceiver) {
+                if (now < nextRunAt(networkId, routeIndex + StaffLinkNetwork.ROUTE_COUNT, target.anchor())) {
+                    receiverLimited = true;
+                    continue;
+                }
+                limit = Math.min(limit, target.amount() - received.getOrDefault(target.anchor(), 0L));
+                if (limit <= 0) {
+                    receiverLimited = true;
+                    continue;
+                }
+            }
+            long transferred = StaffLinkTargets.transfer(from, releaseLevel, release, targetLevel, target, limit);
+            if (limitReceiver && transferred > 0) received.merge(target.anchor(), transferred, Long::sum);
+            moved += transferred;
         }
-        return new Distribution(moved);
+        return new Distribution(moved, receiverLimited);
     }
 
     // ------------------------------------------------------------------ 气压伺服

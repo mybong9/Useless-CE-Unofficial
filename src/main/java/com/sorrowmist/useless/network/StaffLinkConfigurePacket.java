@@ -86,9 +86,12 @@ public record StaffLinkConfigurePacket(GlobalPos anchor, int route, StaffLinkRou
                     sanitizeInterval(packet.config()),
                     packet.config().side(),
                     packet.config().weight(),
-                    sanitizeFilter(packet.config().filter(), packet.config().medium()));
+                    sanitizeFilter(packet.config().filter(), packet.config().medium()),
+                    packet.config().outputSide(),
+                    sanitizeFilter(packet.config().outputFilter(), packet.config().medium()));
 
             network.putRoute(sanitized);
+            StaffLinkManager.captureAeAnchor(player, network);
             StaffLinkSavedData.get(player.server).markDirty();
             // 改完立刻重跑：新开的配对不该等上一次排定的退避。
             StaffLinkEngine.wake(network.id());

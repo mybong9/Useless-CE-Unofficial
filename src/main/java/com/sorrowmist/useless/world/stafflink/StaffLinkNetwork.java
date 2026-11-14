@@ -60,6 +60,8 @@ public final class StaffLinkNetwork {
                     StaffLinkRoute.writeAnchor(buf, anchor);
                     buf.writeUtf(anchorName);
                 });
+                buf.writeBoolean(network.aeAnchor != null);
+                if (network.aeAnchor != null) StaffLinkRoute.writeAnchor(buf, network.aeAnchor);
             },
             buf -> {
                 UUID id = buf.readUUID();
@@ -72,11 +74,19 @@ public final class StaffLinkNetwork {
                     GlobalPos anchor = StaffLinkRoute.readAnchor(buf);
                     network.anchorNames.put(anchor, buf.readUtf());
                 }
+                if (buf.readBoolean()) network.aeAnchor = StaffLinkRoute.readAnchor(buf);
                 return network;
             });
 
     private final UUID id;
     private String name;
+    @Nullable
+    private GlobalPos aeAnchor;
+
+    @Nullable
+    public GlobalPos aeAnchor() { return aeAnchor; }
+
+    public void setAeAnchor(GlobalPos anchor) { aeAnchor = anchor; }
     private final List<StaffLinkRoute> routes = new ArrayList<>();
     /** 玩家给锚点起的名字；没起名时不出现在表里，界面回落到方块名。 */
     private final Map<GlobalPos, String> anchorNames = new LinkedHashMap<>();
@@ -279,7 +289,7 @@ public final class StaffLinkNetwork {
     /** 该网络里是否已经有释放端——绑定新锚点时用它决定默认流向。 */
     public boolean hasReleaseRoute() {
         for (StaffLinkRoute route : routes) {
-            if (route.flow() == LinkFlow.RELEASE) {
+            if (route.flow() != LinkFlow.ABSORB) {
                 return true;
             }
         }
@@ -292,6 +302,12 @@ public final class StaffLinkNetwork {
         CompoundTag tag = new CompoundTag();
         tag.putUUID(TAG_ID, id);
         tag.putString(TAG_NAME, name);
+        if (aeAnchor != null) {
+            CompoundTag ae = new CompoundTag();
+            ae.putString(TAG_DIMENSION, aeAnchor.dimension().location().toString());
+            ae.putLong(TAG_POS, aeAnchor.pos().asLong());
+            tag.put("AeAnchor", ae);
+        }
 
         ListTag routeList = new ListTag();
         for (StaffLinkRoute route : routes) {
@@ -315,6 +331,10 @@ public final class StaffLinkNetwork {
         StaffLinkNetwork network = new StaffLinkNetwork(
                 tag.hasUUID(TAG_ID) ? tag.getUUID(TAG_ID) : UUID.randomUUID(),
                 tag.getString(TAG_NAME));
+        CompoundTag ae = tag.getCompound("AeAnchor");
+        ResourceLocation aeDimension = ResourceLocation.tryParse(ae.getString(TAG_DIMENSION));
+        if (aeDimension != null) network.aeAnchor = GlobalPos.of(
+                ResourceKey.create(Registries.DIMENSION, aeDimension), BlockPos.of(ae.getLong(TAG_POS)));
 
         ListTag routeList = tag.getList(TAG_ROUTES, Tag.TAG_COMPOUND);
         for (int i = 0; i < routeList.size(); i++) {

@@ -118,6 +118,10 @@ final class PlatformPreview implements AutoCloseable {
         manager.release(sideTextureId);
     }
 
+    boolean isClosed() {
+        return closed;
+    }
+
     /** 配置或样式变化时才重新采样；record 的值语义让比较很便宜。 */
     void refresh(PlatformStyle style, DimensionGenerationConfig config) {
         if (style == null || config == null) {

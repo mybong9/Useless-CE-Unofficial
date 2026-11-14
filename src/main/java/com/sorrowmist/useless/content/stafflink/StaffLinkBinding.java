@@ -205,6 +205,7 @@ public final class StaffLinkBinding {
     /** 收尾：同步界面、唤醒引擎。所有绑定路径都必须走这里。 */
     private static void finish(ServerLevel level, ServerPlayer player, UUID ownerId,
                                StaffLinkNetwork network, StaffLinkSavedData data) {
+        StaffLinkManager.captureAeAnchor(player, network);
         // 界面开着时同步刷新，避免显示的还是旧锚点列表。
         ModNetwork.CHANNEL.sendToPlayer(player,
                 StaffLinkSyncPacket.of(level.getServer(), ownerId, network));

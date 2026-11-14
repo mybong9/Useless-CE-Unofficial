@@ -43,7 +43,9 @@ public record StaffLinkRoute(
         int interval,
         @Nullable Direction side,
         int weight,
-        List<LinkFilterSlot> filter
+        List<LinkFilterSlot> filter,
+        @Nullable Direction outputSide,
+        List<LinkFilterSlot> outputFilter
 ) {
     /** 线路总数；线路号取值 {@code 0 .. ROUTE_COUNT - 1}。 */
     public static final int ROUTE_COUNT = 9;
@@ -152,6 +154,11 @@ public record StaffLinkRoute(
     /** 条件内部：阈值。 */
     private static final String TAG_COND_VALUE = "Value";
 
+    public StaffLinkRoute(GlobalPos anchor, int route, boolean enabled, LinkFlow flow, LinkMedium medium,
+                          long amount, int interval, @Nullable Direction side, int weight, List<LinkFilterSlot> filter) {
+        this(anchor, route, enabled, flow, medium, amount, interval, side, weight, filter, side, filter);
+    }
+
     public StaffLinkRoute {
         Objects.requireNonNull(anchor, "anchor");
         Objects.requireNonNull(flow, "flow");
@@ -165,12 +172,19 @@ public record StaffLinkRoute(
         interval = Mth.clamp(interval, MIN_INTERVAL, MAX_INTERVAL);
         weight = Mth.clamp(weight, MIN_WEIGHT, MAX_WEIGHT);
 
+        if (flow == LinkFlow.BOTH && (medium.family() == ResourceFamily.STRESS
+                || medium.family() == ResourceFamily.PRESSURE)) flow = LinkFlow.ABSORB;
+        filter = normalizeFilter(filter);
+        outputFilter = normalizeFilter(outputFilter);
+    }
+
+    private static List<LinkFilterSlot> normalizeFilter(List<LinkFilterSlot> filter) {
         List<LinkFilterSlot> normalized = new ArrayList<>(FILTER_LIMIT);
         for (int slot = 0; slot < FILTER_LIMIT; slot++) {
             LinkFilterSlot value = filter != null && slot < filter.size() ? filter.get(slot) : null;
             normalized.add(value == null ? LinkFilterSlot.EMPTY : value);
         }
-        filter = List.copyOf(normalized);
+        return List.copyOf(normalized);
     }
 
     /**
@@ -205,7 +219,17 @@ public record StaffLinkRoute(
     /** 换一份过滤器，其余不变。 */
     public StaffLinkRoute withFilter(List<LinkFilterSlot> newFilter) {
         return new StaffLinkRoute(anchor, route, enabled, flow, medium, amount, interval,
-                side, weight, newFilter);
+                side, weight, newFilter, outputSide, outputFilter);
+    }
+
+    public StaffLinkRoute forOutput() {
+        return new StaffLinkRoute(anchor, route, enabled, LinkFlow.RELEASE, medium, amount, interval,
+                outputSide, weight, outputFilter);
+    }
+
+    public StaffLinkRoute withOutput(@Nullable Direction newSide, List<LinkFilterSlot> newFilter) {
+        return new StaffLinkRoute(anchor, route, enabled, flow, medium, amount, interval,
+                side, weight, filter, newSide, newFilter);
     }
 
     /**
@@ -282,7 +306,15 @@ public record StaffLinkRoute(
         tag.putInt(TAG_INTERVAL, interval);
         tag.putString(TAG_SIDE, side == null ? "" : side.getName());
         tag.putInt(TAG_WEIGHT, weight);
+        tag.put(TAG_FILTER, saveFilter(filter, registries));
+        CompoundTag output = new CompoundTag();
+        output.putString(TAG_SIDE, outputSide == null ? "" : outputSide.getName());
+        output.put(TAG_FILTER, saveFilter(outputFilter, registries));
+        tag.put("output", output);
+        return tag;
+    }
 
+    private static ListTag saveFilter(List<LinkFilterSlot> filter, HolderLookup.Provider registries) {
         ListTag filterTag = new ListTag();
         for (LinkFilterSlot slot : filter) {
             CompoundTag entry = new CompoundTag();
@@ -315,8 +347,7 @@ public record StaffLinkRoute(
             }
             filterTag.add(entry);
         }
-        tag.put(TAG_FILTER, filterTag);
-        return tag;
+        return filterTag;
     }
 
     /** 读回一条配置；维度或坐标不合法时返回 {@code null}（调用方跳过该条）。 */
@@ -341,6 +372,12 @@ public record StaffLinkRoute(
                     : LinkFilterSlot.EMPTY);
         }
 
+        CompoundTag output = tag.getCompound("output");
+        List<LinkFilterSlot> outputFilter = new ArrayList<>();
+        for (Tag entry : output.getList(TAG_FILTER, Tag.TAG_COMPOUND)) {
+            if (outputFilter.size() == FILTER_LIMIT) break;
+            outputFilter.add(readFilterSlot((CompoundTag) entry, medium, registries));
+        }
         return new StaffLinkRoute(
                 anchor,
                 tag.getInt(TAG_ROUTE),
@@ -351,7 +388,9 @@ public record StaffLinkRoute(
                 tag.getInt(TAG_INTERVAL),
                 readSide(tag.getString(TAG_SIDE)),
                 tag.getInt(TAG_WEIGHT),
-                filter);
+                filter,
+                tag.contains("output") ? readSide(output.getString(TAG_SIDE)) : readSide(tag.getString(TAG_SIDE)),
+                tag.contains("output") ? outputFilter : filter);
     }
 
     /**
@@ -613,6 +652,9 @@ public record StaffLinkRoute(
                 }
                 buf.writeVarInt(route.weight());
                 FILTER_CODEC.encode(buf, route.filter());
+                buf.writeBoolean(route.outputSide() != null);
+                if (route.outputSide() != null) buf.writeEnum(route.outputSide());
+                FILTER_CODEC.encode(buf, route.outputFilter());
             },
             buf -> {
                 GlobalPos anchor = readAnchor(buf);
@@ -625,7 +667,8 @@ public record StaffLinkRoute(
                 Direction side = buf.readBoolean() ? buf.readEnum(Direction.class) : null;
                 int weight = buf.readVarInt();
                 List<LinkFilterSlot> filter = FILTER_CODEC.decode(buf);
+                Direction outputSide = buf.readBoolean() ? buf.readEnum(Direction.class) : null;
                 return new StaffLinkRoute(anchor, route, enabled, flow, medium, amount, interval,
-                        side, weight, filter);
+                        side, weight, filter, outputSide, FILTER_CODEC.decode(buf));
             });
 }

@@ -25,6 +25,8 @@ public class ShadowFluidInputHatchBlockEntity extends ECOFluidInputHatchBlockEnt
         getMainNode().setInWorldNode(false);
     }
 
+
+
     @Override
     public void tick(Level level, BlockPos pos, BlockState state) {
         // The compact host exposes the tank through its own block capability.

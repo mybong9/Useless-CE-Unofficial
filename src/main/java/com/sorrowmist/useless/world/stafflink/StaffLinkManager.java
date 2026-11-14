@@ -65,6 +65,17 @@ public final class StaffLinkManager {
     private StaffLinkManager() {
     }
 
+    /** Remember the staff's ME connection so container routes do not need a second source node. */
+    public static void captureAeAnchor(ServerPlayer player, StaffLinkNetwork network) {
+        var tool = com.sorrowmist.useless.utils.UselessItemUtils.findTargetToolInHands(player);
+        if (tool.isEmpty()) return;
+        var anchor = CoreItemComponents.get(tool.get().getKey(), UselessComponents.WIRELESS_LINK_TARGET.get());
+        if (anchor == null || anchor.equals(network.aeAnchor())) return;
+        network.setAeAnchor(anchor);
+        StaffLinkSavedData.get(player.server).markDirty();
+        com.sorrowmist.useless.content.stafflink.StaffLinkEngine.wake(network.id());
+    }
+
     // ------------------------------------------------------------------ 归属
 
     /** 该玩家当前的归属 ID：有队伍就是队伍，否则是他自己。 */

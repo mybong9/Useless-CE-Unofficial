@@ -58,7 +58,7 @@ import com.sorrowmist.useless.network.StaffLinkSyncPacket;
 import com.sorrowmist.useless.network.StaffLinkStressStatusPacket;
 
 public class ModNetwork {
-    public static final CoreNetworkChannel CHANNEL = new CoreNetworkChannel(new ResourceLocation(UselessMod.MODID, "network"), "2");
+    public static final CoreNetworkChannel CHANNEL = new CoreNetworkChannel(new ResourceLocation(UselessMod.MODID, "network"), "3");
 
     public static void registerPackets() {
         CHANNEL.registerToClient(com.sorrowmist.useless.network.WootRecipesPacket.class, com.sorrowmist.useless.network.WootRecipesPacket.CODEC, com.sorrowmist.useless.network.WootRecipesPacket::handle);

@@ -45,7 +45,9 @@ final class AeNetworks {
      * <p>只看方块是否注册了网格节点宿主能力，不看在线状态，理由见类注释。</p>
      */
     static boolean isEndpoint(Level level, BlockPos pos) {
-        return host(level, pos) != null;
+        return level != null && pos != null && level.isLoaded(pos)
+                && (level.getBlockEntity(pos) instanceof appeng.blockentity.networking.WirelessAccessPointBlockEntity
+                || host(level, pos) != null);
     }
 
     /** 该坐标的网格节点宿主能力；方块不是 AE 设备时为 {@code null}。 */
@@ -65,6 +67,10 @@ final class AeNetworks {
     /** 该坐标的网格节点；方块不是 AE 设备、或节点尚未 create 时为 {@code null}。 */
     @Nullable
     static IGridNode node(Level level, BlockPos pos) {
+        if (level != null && pos != null && level.isLoaded(pos)
+                && level.getBlockEntity(pos) instanceof appeng.blockentity.networking.WirelessAccessPointBlockEntity accessPoint) {
+            return accessPoint.getMainNode().isOnline() ? accessPoint.getMainNode().getNode() : null;
+        }
         IInWorldGridNodeHost host = host(level, pos);
         return host == null ? null : resolveNode(host);
     }
@@ -114,7 +120,7 @@ final class AeNetworks {
         // ① 契约路径：方块实体主节点 / 中心线缆。
         try {
             IGridNode node = host.getGridNode(null);
-            if (node != null) {
+            if (node != null && isNodeReady(node)) {
                 return node;
             }
         } catch (Throwable ignored) {
@@ -124,7 +130,7 @@ final class AeNetworks {
         for (Direction direction : Direction.values()) {
             try {
                 IGridNode node = host.getGridNode(direction);
-                if (node != null) {
+                if (node != null && isNodeReady(node)) {
                     return node;
                 }
             } catch (Throwable ignored) {

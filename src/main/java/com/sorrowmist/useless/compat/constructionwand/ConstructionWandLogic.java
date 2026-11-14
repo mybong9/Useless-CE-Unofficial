@@ -90,6 +90,20 @@ public final class ConstructionWandLogic {
     }
 
     public static boolean handleRightClickBlock(PlayerInteractEvent.RightClickBlock event) {
+        // 主手/副手各会收到一次 RightClickBlock：若另一只手也拿着已启用的手杖，
+        // 两次事件都会进入建造逻辑，表现为“概率多放/多触发一次右键”。只让持杖的那只手
+        // 处理，另一只手的事件直接吞掉，避免原版放置与手杖建造叠加。
+        if (event.getHand() == InteractionHand.MAIN_HAND) {
+            if (!isEnabled(event.getItemStack()) && isEnabled(event.getEntity().getOffhandItem())) {
+                event.setCanceled(true);
+                event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide()));
+                return true;
+            }
+        } else if (isEnabled(event.getEntity().getMainHandItem())) {
+            event.setCanceled(true);
+            event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide()));
+            return true;
+        }
         if (!isEnabled(event.getItemStack())) return false;
 
         event.setCanceled(true);

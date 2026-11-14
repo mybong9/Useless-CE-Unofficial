@@ -474,9 +474,11 @@ public final class DimensionConfigMenu extends AbstractContainerMenu {
     public void clicked(int slotId, int button, @NotNull ClickType clickType, @NotNull Player player) {
         if (slotId >= 0 && slotId < GHOST_SLOT_COUNT) {
             ItemStack carried = getCarried();
-            setGhostBlockId(slotId,
-                    !carried.isEmpty() && carried.getItem() instanceof BlockItem
-                            ? DimensionGenerationConfig.blockId(carried) : null);
+            if (clickType == ClickType.PICKUP && carried.getItem() instanceof BlockItem) {
+                setGhostBlockId(slotId, DimensionGenerationConfig.blockId(carried));
+            } else if (clickType == ClickType.PICKUP && button == 1 && carried.isEmpty()) {
+                setGhostBlockId(slotId, null);
+            }
             return;
         }
         super.clicked(slotId, button, clickType, player);

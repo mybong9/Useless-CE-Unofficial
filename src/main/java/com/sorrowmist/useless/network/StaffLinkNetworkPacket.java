@@ -90,6 +90,7 @@ public record StaffLinkNetworkPacket(Action action, String name) implements Core
         if (created == null) {
             return;
         }
+        StaffLinkManager.captureAeAnchor(player, created);
         // 新网络成了当前网络，服务端菜单也要一起切过去。
         if (player.containerMenu instanceof StaffLinkMenu menu) {
             menu.setNetworkId(created.id());
@@ -108,6 +109,7 @@ public record StaffLinkNetworkPacket(Action action, String name) implements Core
             player.closeContainer();
             return;
         }
+        StaffLinkManager.captureAeAnchor(player, next);
         // 解散后会自动切到相邻的一张，服务端菜单必须跟着走。
         if (player.containerMenu instanceof StaffLinkMenu menu) {
             menu.setNetworkId(next.id());

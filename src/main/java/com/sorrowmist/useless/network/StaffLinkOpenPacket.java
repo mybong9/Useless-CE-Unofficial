@@ -62,6 +62,7 @@ public class StaffLinkOpenPacket implements CoreCustomPacketPayload {
             if (network == null) {
                 return;
             }
+            StaffLinkManager.captureAeAnchor(player, network);
 
             com.sorrowmist.uselesscore.api.network.CoreMenus.open(player, new MenuProvider() {
                 @Override

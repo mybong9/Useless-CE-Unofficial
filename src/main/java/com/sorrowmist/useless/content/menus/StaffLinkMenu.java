@@ -345,7 +345,7 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
     private static StaffLinkRoute copyFor(GlobalPos anchor, StaffLinkRoute route) {
         return new StaffLinkRoute(anchor, route.route(), route.enabled(), route.flow(), route.medium(),
                 route.amount(), route.interval(), route.side(), route.weight(),
-                route.filter());
+                route.filter(), route.outputSide(), route.outputFilter());
     }
 
     /**
@@ -365,7 +365,7 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
                 base.interval() != edited.interval() ? edited.interval() : base.interval(),
                 base.side() != edited.side() ? edited.side() : base.side(),
                 base.weight() != edited.weight() ? edited.weight() : base.weight(),
-                base.filter().equals(edited.filter()) ? base.filter() : edited.filter());
+                edited.filter(), edited.outputSide(), edited.outputFilter());
     }
 
     /**
@@ -449,6 +449,14 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
     }
 
     /** 改一个过滤器槽；没有选中配置或该线路不用过滤器时忽略。 */
+    private boolean editOutput;
+    public boolean isEditingOutput() {
+        StaffLinkRoute config = getSelectedConfig();
+        return config != null && (config.flow() == LinkFlow.RELEASE
+                || editOutput && config.flow() == LinkFlow.BOTH);
+    }
+    public void toggleFilterDirection() { editOutput = !editOutput; refreshFilterMirror(); }
+
     public void setFilterSlot(int index, LinkFilterSlot slot) {
         StaffLinkRoute config = getSelectedConfig();
         if (config == null || !config.filterApplies()) {
@@ -457,9 +465,9 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
         if (index < 0 || index >= StaffLinkRoute.FILTER_LIMIT) {
             return;
         }
-        List<LinkFilterSlot> filter = new ArrayList<>(config.filter());
+        List<LinkFilterSlot> filter = new ArrayList<>(isEditingOutput() ? config.outputFilter() : config.filter());
         filter.set(index, slot == null ? LinkFilterSlot.EMPTY : slot);
-        applyRoute(config.withFilter(filter));
+        applyRoute(isEditingOutput() ? config.withOutput(config.outputSide(), filter) : config.withFilter(filter));
     }
 
     /**
@@ -507,10 +515,10 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
         if (index < 0 || index >= StaffLinkRoute.FILTER_LIMIT) {
             return;
         }
-        List<LinkFilterSlot> filter = new ArrayList<>(config.filter());
+        List<LinkFilterSlot> filter = new ArrayList<>(isEditingOutput() ? config.outputFilter() : config.filter());
         LinkFilterSlot current = index < filter.size() ? filter.get(index) : LinkFilterSlot.EMPTY;
         filter.set(index, change.apply(current));
-        applyRoute(config.withFilter(filter));
+        applyRoute(isEditingOutput() ? config.withOutput(config.outputSide(), filter) : config.withFilter(filter));
     }
 
     /** 把控制材料 B 换成一格标记里的物品 / 流体；标记为空 ⇒ 清掉 B。 */
@@ -580,7 +588,7 @@ public final class StaffLinkMenu extends AbstractContainerMenu {
             return;
         }
         List<LinkFilterSlot> filter = new ArrayList<>(StaffLinkRoute.FILTER_LIMIT);
-        List<LinkFilterSlot> source = config.filter();
+        List<LinkFilterSlot> source = isEditingOutput() ? config.outputFilter() : config.filter();
         for (int index = 0; index < StaffLinkRoute.FILTER_LIMIT; index++) {
             filter.add(index < source.size() ? source.get(index) : LinkFilterSlot.EMPTY);
         }

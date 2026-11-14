@@ -199,6 +199,11 @@ public final class LongResourceAdapters {
 
     /** 把 NeoForge 流体处理器包装成 long 级。 */
     public static LongFluidHandler fluids(IFluidHandler handler) {
+        // 已经提供 long 语义的实现（例如紧凑 F9 的冷却液池）直接透传，避免被
+        // int 适配器截断容量与单次注入速度。
+        if (handler instanceof LongFluidHandler longHandler) {
+            return longHandler;
+        }
         return new LongFluidHandler() {
             @Override
             public int getTanks() {
