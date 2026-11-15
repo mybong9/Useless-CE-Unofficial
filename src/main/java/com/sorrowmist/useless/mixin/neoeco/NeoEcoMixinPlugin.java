@@ -12,7 +12,15 @@ public final class NeoEcoMixinPlugin implements IMixinConfigPlugin {
     @Override public void onLoad(String mixinPackage) {}
     @Override public String getRefMapperConfig() { return null; }
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        return FMLLoader.getLoadingModList().getModFileById("neoecoae") != null;
+        var mods = FMLLoader.getLoadingModList();
+        if (mods.getModFileById("neoecoae") == null) return false;
+        if (mixinClassName.endsWith(".CrazyAeEcoOutputMixin")) {
+            // shortcut: only 2.6.2 was verified to bypass ECO; extend after checking other versions.
+            var file = mods.getModFileById("crazyae2addons");
+            return file != null && file.getMods().stream().anyMatch(mod ->
+                    mod.getModId().equals("crazyae2addons") && mod.getVersion().toString().equals("2.6.2"));
+        }
+        return true;
     }
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
     @Override public List<String> getMixins() { return null; }

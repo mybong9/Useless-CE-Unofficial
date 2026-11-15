@@ -6,6 +6,7 @@
   "mixins": [
     "NeoEcoPatternBusInventoryAccessor",
     "NeoEcoCpuMixin",
+    "CrazyAeEcoOutputMixin",
     "CompactLogicalNetworkMixin",
     "NeoEcoSubmissionScopeMixin",
     "NeoEcoPatternBusCapacityMixin",
