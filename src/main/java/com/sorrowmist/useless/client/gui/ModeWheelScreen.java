@@ -1113,13 +1113,6 @@ public class ModeWheelScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        if (draggingScrollbar) {
-            if (GLFW.glfwGetMouseButton(minecraft.getWindow().getWindow(), GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_RELEASE) {
-                draggingScrollbar = false;
-            } else {
-                scrollbarTo(toUiY(mouseY));
-            }
-        }
         if (StaffGlass.aeStyle()) graphics.fill(0, 0, width, height, 0x66000000);
         else com.sorrowmist.uselesscore.client.ui.UiRender.captureScene(graphics);
         graphics.pose().pushPose();
