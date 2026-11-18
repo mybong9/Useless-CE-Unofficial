@@ -13,9 +13,14 @@ public final class NeoEcoMixinPlugin implements IMixinConfigPlugin {
     @Override public String getRefMapperConfig() { return null; }
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         var mods = FMLLoader.getLoadingModList();
-        if (mods.getModFileById("neoecoae") == null) return false;
+        var eco = mods.getModFileById("neoecoae");
+        if (eco == null) return false;
         if (mixinClassName.endsWith(".CrazyAeEcoOutputMixin")) {
-            // shortcut: only 2.6.2 was verified to bypass ECO; extend after checking other versions.
+            // The early insertion bridge was removed in ECO 20.5.8.
+            if (eco.getMods().stream().noneMatch(mod ->
+                    mod.getModId().equals("neoecoae") && mod.getVersion().toString().equals("20.5.7"))) {
+                return false;
+            }
             var file = mods.getModFileById("crazyae2addons");
             return file != null && file.getMods().stream().anyMatch(mod ->
                     mod.getModId().equals("crazyae2addons") && mod.getVersion().toString().equals("2.6.2"));

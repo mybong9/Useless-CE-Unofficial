@@ -21,11 +21,12 @@ public abstract class CompactInterfaceMenuDataMixin {
         int start=buffer.readerIndex();
         var pos=buffer.readBlockPos();
         var blockEntity=player.level().getBlockEntity(pos);
-        if(!(blockEntity instanceof CompactUiHost)) { buffer.readerIndex(start); return; }
-        var payload=PatternPreviewCodec.read(buffer);
-        var target=CompactInterfaceRouting.resolve(blockEntity,player);
-        if(target instanceof ECOMachineInterfaceBlockEntity<?> machineInterface)
-            machineInterface.getPatternPreviewSync().receive(payload);
-        ci.cancel();
+        if (blockEntity instanceof CompactUiHost
+                && CompactInterfaceRouting.resolve(blockEntity, player) instanceof ECOMachineInterfaceBlockEntity<?> target) {
+            target.getPatternPreviewSync().receive(PatternPreviewCodec.read(buffer));
+            ci.cancel();
+        } else {
+            buffer.readerIndex(start);
+        }
     }
 }
