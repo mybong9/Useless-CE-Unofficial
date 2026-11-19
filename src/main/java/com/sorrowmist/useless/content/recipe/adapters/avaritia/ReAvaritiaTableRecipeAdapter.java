@@ -108,7 +108,7 @@ public final class ReAvaritiaTableRecipeAdapter implements IRecipeAdapter<ITierC
                 ModRecipeTypes.CRAFTING_TABLE_RECIPE.get())) {
             Converted converted = convertData(holder.value());
             if (converted != null
-                    && converted.mold().is(mold.getItem())
+                    && AdapterUtils.toMoldIngredient(converted.mold()).test(mold)
                     && AdapterUtils.matchesRequired(mergedInputs, converted.requirements())) {
                 matches.add(holder);
             }

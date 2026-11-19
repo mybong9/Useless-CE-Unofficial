@@ -779,14 +779,11 @@ public final class AlloyFurnaceRecipeCatalog {
             // by AlloyFurnaceRecipeFingerprint.encodeExactOutput. Relaxing item components
             // everywhere would collapse recipes that differ only by an output component, so only
             // resolver-marked item-id-only slots ignore components.
-            boolean outputsMatch = allowMissingOutputs
-                    ? matchesGenericSubset(
-                            com.sorrowmist.uselesscore.api.ae.CoreAePatterns.outputs(pattern), expectedOutputs, componentAgnosticOutputs, operations)
-                    : componentAgnosticOutputs.isEmpty()
-                            ? sameGenericScaled(com.sorrowmist.uselesscore.api.ae.CoreAePatterns.outputs(pattern), expectedOutputs, operations)
-                            : sameGenericIgnoringSlotComponents(
-                                    com.sorrowmist.uselesscore.api.ae.CoreAePatterns.outputs(pattern), expectedOutputs,
-                                    componentAgnosticOutputs, operations);
+            var actualOutputs = com.sorrowmist.uselesscore.api.ae.CoreAePatterns.outputs(pattern);
+            boolean outputsMatch = allowMissingOutputs || !componentAgnosticOutputs.isEmpty()
+                    ? (allowMissingOutputs || actualOutputs.size() == expectedOutputs.size())
+                        && matchesGenericSubset(actualOutputs, expectedOutputs, componentAgnosticOutputs, operations)
+                    : sameGenericScaled(actualOutputs, expectedOutputs, operations);
             if (outputsMatch) return OptionalLong.of(operations);
         }
         return OptionalLong.empty();
@@ -982,40 +979,29 @@ public final class AlloyFurnaceRecipeCatalog {
         }
 
         boolean[] matched = new boolean[expected.size()];
-        for (int actualSlot = 0; actualSlot < actual.size(); actualSlot++) {
-            GenericStack actualOutput = actual.get(actualSlot);
-            if (actualOutput == null || actualOutput.what() == null || actualOutput.amount() <= 0L) {
-                return false;
-            }
+        // Exact slots reserve their outputs first. A dynamic slot can otherwise claim a
+        // component-specific output that a later exact slot is the only one able to use.
+        for (boolean dynamic : new boolean[]{false, true}) {
+            for (int slot = 0; slot < actual.size(); slot++) {
+                if (componentAgnosticSlots.contains(slot) != dynamic) continue;
+                GenericStack output = actual.get(slot);
+                if (output == null || output.what() == null || output.amount() <= 0L) return false;
 
-            int matchedSlot = -1;
-            for (int expectedSlot = 0; expectedSlot < expected.size(); expectedSlot++) {
-                if (matched[expectedSlot]) {
-                    continue;
+                int match = -1;
+                for (int candidate = 0; candidate < expected.size(); candidate++) {
+                    GenericStack recipeOutput = expected.get(candidate);
+                    if (matched[candidate] || recipeOutput == null || recipeOutput.what() == null
+                            || multiplyAmount(recipeOutput.amount(), operations) != output.amount()) continue;
+                    if (dynamic ? matchesItemId(output.what(), recipeOutput.what())
+                            : output.what().equals(recipeOutput.what())) {
+                        match = candidate;
+                        break;
+                    }
                 }
-                GenericStack expectedOutput = expected.get(expectedSlot);
-                long expectedAmount = expectedOutput == null
-                        ? -1L : multiplyAmount(expectedOutput.amount(), operations);
-                if (expectedOutput == null || expectedOutput.what() == null
-                        || expectedAmount < 0L || expectedAmount != actualOutput.amount()) {
-                    continue;
-                }
-
-                boolean matches = componentAgnosticSlots.contains(actualSlot)
-                        ? matchesItemId(actualOutput.what(), expectedOutput.what())
-                        : actualOutput.what().equals(expectedOutput.what());
-                if (matches) {
-                    matchedSlot = expectedSlot;
-                    break;
-                }
+                if (match < 0) return false;
+                matched[match] = true;
             }
-            if (matchedSlot < 0) {
-                return false;
-            }
-            matched[matchedSlot] = true;
         }
-        // At least one output was validated above. Any recipe output can be the retained fallback
-        // when the original primary output was removed from the pattern.
         return true;
     }
 
@@ -1023,31 +1009,6 @@ public final class AlloyFurnaceRecipeCatalog {
         return actual instanceof AEItemKey actualItem
                 && expected instanceof AEItemKey expectedItem
                 && actualItem.getItem() == expectedItem.getItem();
-    }
-
-    /**
-     * Compares outputs slot-by-slot, ignoring item components in the given slots. Slot indices are
-     * positional, so this cannot use the order-insensitive multiset comparison.
-     */
-    private static boolean sameGenericIgnoringSlotComponents(
-            List<GenericStack> patternOutputs, List<GenericStack> recipeOutputs,
-            Set<Integer> ignoredSlots, long operations) {
-        if (patternOutputs.size() != recipeOutputs.size()) return false;
-        for (int slot = 0; slot < patternOutputs.size(); slot++) {
-            GenericStack left = patternOutputs.get(slot);
-            GenericStack right = recipeOutputs.get(slot);
-            long expectedAmount = right == null ? -1L : multiplyAmount(right.amount(), operations);
-            if (left == null || right == null || expectedAmount < 0L
-                    || left.amount() != expectedAmount) return false;
-            if (!ignoredSlots.contains(slot)) {
-                if (!left.what().equals(right.what())) return false;
-            } else if (!(left.what() instanceof AEItemKey leftItem)
-                    || !(right.what() instanceof AEItemKey rightItem)
-                    || leftItem.getItem() != rightItem.getItem()) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private static boolean sameAmounts(List<FluidStack> left, List<FluidStack> right) {

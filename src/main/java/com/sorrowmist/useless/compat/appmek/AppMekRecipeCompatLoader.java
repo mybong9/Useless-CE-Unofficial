@@ -51,5 +51,39 @@ public final class AppMekRecipeCompatLoader {
         manager.registerAdapter(new NucleosynthesizingRecipeAdapter(), RecipeSourceIds.APP_MEK);
         manager.registerAdapter(new SpsRecipeAdapter(), RecipeSourceIds.APP_MEK);
         manager.registerAdapter(new BoilerRecipeAdapter(), RecipeSourceIds.APP_MEK);
+        if (net.minecraftforge.fml.ModList.get().isLoaded("evolvedmekanism")) {
+            try {
+                manager.registerAdapter(new com.sorrowmist.useless.content.recipe.adapters.mekanism.EvolvedMachineRecipeAdapter(true), RecipeSourceIds.APP_MEK);
+            } catch (ReflectiveOperationException | LinkageError failure) {
+                com.sorrowmist.useless.UselessMod.LOGGER.warn("Cannot register Evolved Mekanism recipes", failure);
+            }
+        }
+
+        if (net.minecraftforge.fml.ModList.get().isLoaded("evolvedmekanism")) {
+            registerApt(manager);
+        }
+    }
+
+    private static void registerApt(AlloyFurnaceRecipeManager manager) {
+        try {
+            @SuppressWarnings("unchecked")
+            var type = (net.minecraft.world.item.crafting.RecipeType<? extends
+                    mekanism.api.recipes.chemical.ItemStackChemicalToItemStackRecipe<?,?,?>>)
+                    com.sorrowmist.useless.content.recipe.adapters.mekanism.EvolvedMachineRecipeAdapter.registeredType("APT");
+            var mold = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(
+                    new net.minecraft.resources.ResourceLocation("evolvedmekanism", "apt_casing"));
+            if (mold == net.minecraft.world.item.Items.AIR) return;
+            manager.registerAdapter(new MetallurgicInfuserRecipeAdapter() {
+                @Override public net.minecraft.world.item.ItemStack getMoldItem() {
+                    return new net.minecraft.world.item.ItemStack(mold);
+                }
+                @Override protected net.minecraft.world.item.crafting.RecipeType<? extends
+                        mekanism.api.recipes.chemical.ItemStackChemicalToItemStackRecipe<?,?,?>> getMekanismRecipeType() {
+                    return type;
+                }
+            }, RecipeSourceIds.APP_MEK);
+        } catch (ReflectiveOperationException | LinkageError failure) {
+            com.sorrowmist.useless.UselessMod.LOGGER.warn("Cannot register Evolved Mekanism APT recipes", failure);
+        }
     }
 }

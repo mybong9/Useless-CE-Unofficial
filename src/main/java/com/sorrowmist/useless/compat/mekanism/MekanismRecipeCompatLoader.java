@@ -28,6 +28,14 @@ public final class MekanismRecipeCompatLoader {
         manager.registerAdapter(new FluidToFluidRecipeAdapter(), RecipeSourceIds.MEKANISM);
         manager.registerAdapter(new HeavyWaterRecipeAdapter(), RecipeSourceIds.MEKANISM);
 
+        if (net.minecraftforge.fml.ModList.get().isLoaded("evolvedmekanism")) {
+            try {
+                manager.registerAdapter(new com.sorrowmist.useless.content.recipe.adapters.mekanism.EvolvedMachineRecipeAdapter(false), RecipeSourceIds.MEKANISM);
+            } catch (ReflectiveOperationException | LinkageError failure) {
+                com.sorrowmist.useless.UselessMod.LOGGER.warn("Cannot register Evolved Mekanism recipes", failure);
+            }
+        }
+
         if (ModList.get().isLoaded("appmek")
                 && ConfigManager.isRecipeConversionEnabled(RecipeSourceIds.APP_MEK)) {
             invokeAppMekRecipes();

@@ -139,9 +139,13 @@ public class AdapterUtils {
      * @param moldItem 模具物品
      * @return 可用于配方模具字段的 Ingredient，空输入返回 Ingredient.EMPTY
      */
+    static List<ItemStack> compatibleMolds(ItemStack mold) {
+        return MachineMoldFamilies.alternatives(mold);
+    }
+
     public static Ingredient toMoldIngredient(@Nullable ItemStack moldItem) {
         if (moldItem == null || moldItem.isEmpty()) return Ingredient.EMPTY;
-        return Ingredient.of(moldItem);
+        return Ingredient.of(compatibleMolds(moldItem).stream());
     }
 
     /**

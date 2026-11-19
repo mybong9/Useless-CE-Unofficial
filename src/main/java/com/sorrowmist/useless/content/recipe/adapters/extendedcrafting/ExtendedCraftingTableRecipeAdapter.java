@@ -93,7 +93,7 @@ public class ExtendedCraftingTableRecipeAdapter implements IRecipeAdapter<ITable
         List<CoreRecipeHolder<ITableRecipe>> matches = new ArrayList<>();
         for (CoreRecipeHolder<ITableRecipe> holder : com.sorrowmist.uselesscore.api.recipe.CoreRecipes.ofType(recipeManager, ModRecipeTypes.TABLE.get())) {
             Converted converted = convertData(holder.value());
-            if (converted != null && converted.mold().getItem() == mold.getItem()
+            if (converted != null && AdapterUtils.toMoldIngredient(converted.mold()).test(mold)
                     && AdapterUtils.matchesRequired(mergedInputs, converted.requirements())) {
                 matches.add(holder);
             }
@@ -218,7 +218,7 @@ public class ExtendedCraftingTableRecipeAdapter implements IRecipeAdapter<ITable
 
     private static boolean isTableItem(ItemStack stack, int tier) {
         ItemStack mold = tableMold(tier);
-        return !mold.isEmpty() && stack.getItem() == mold.getItem();
+        return !mold.isEmpty() && AdapterUtils.toMoldIngredient(mold).test(stack);
     }
 
     private record Converted(

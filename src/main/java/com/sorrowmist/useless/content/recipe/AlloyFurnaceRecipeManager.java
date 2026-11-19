@@ -117,8 +117,10 @@ public class AlloyFurnaceRecipeManager {
         allAdapters.add(adapter);
         adapterSourceIds.put(adapter, normalizedSource);
         if (moldItem != null && !moldItem.isEmpty()) {
-            moldAdapterMap.computeIfAbsent(moldItem.getItem(), ignored -> new CopyOnWriteArrayList<>())
-                    .add(adapter);
+            for (ItemStack compatible : AdapterUtils.compatibleMolds(moldItem)) {
+                moldAdapterMap.computeIfAbsent(compatible.getItem(), ignored -> new CopyOnWriteArrayList<>())
+                        .add(adapter);
+            }
         } else {
             fallbackAdapters.add(adapter);
         }

@@ -49,13 +49,13 @@ public final class WootRecipeAdapter implements IRecipeAdapter<WootSyntheticReci
                         }
                         List<CountedIngredient> in=new ArrayList<>();add(in,baseInput,1);
                         for(String method:List.of("getFirstComplementary","getSecondComplementary","getThirdComplementary","getFourthComplementary")){
-                            Optional<?> extra=(Optional<?>)call(source,method);if(extra.isPresent())add(in,(Ingredient)extra.get(),1);
+                            Optional<?> extra=(Optional<?>)call(source,method);if (extra.orElse(null) instanceof Ingredient ingredient && !ingredient.isEmpty()) add(in, ingredient, 1);
                         }
                         result.add(recipe(AdapterUtils.convertedId(source.getId()),in,List.of(),withRemainders(in,((ItemStack)call(source,"getOutput")).copy()),List.of(),0,20,anvilMolds()));
                     }
                     case "ItemInfuserRecipe" -> {
                         List<CountedIngredient> in=new ArrayList<>();add(in,(Ingredient)call(source,"getIngredient"),1);
-                        Optional<?> extra=(Optional<?>)call(source,"getAugment");if(extra.isPresent())add(in,(Ingredient)extra.get(),1);
+                        Optional<?> extra=(Optional<?>)call(source,"getAugment");if (extra.orElse(null) instanceof Ingredient ingredient && !ingredient.isEmpty()) add(in, ingredient, 1);
                         long energy=num(call(source,"getEnergy"));
                         result.add(recipe(AdapterUtils.convertedId(source.getId()),in,fluids((FluidStack)call(source,"getFluid"),1),withRemainders(in,((ItemStack)call(source,"getOutput")).copy()),List.of(),energy,ticks(energy,config("ItemInfuserConfig","ENERGY_PROCESS_TRANSFER")),molds("item_infuser")));
                     }
@@ -95,7 +95,7 @@ public final class WootRecipeAdapter implements IRecipeAdapter<WootSyntheticReci
             CompoundTag tag=new CompoundTag();tag.putString("id",entityId.toString());
             List<CountedIngredient> in=new ArrayList<>();in.add(new CountedIngredient(StrictNBTIngredient.of(programmedShard(tag)),1));
             for(String method:List.of("getFirstComplementary","getSecondComplementary","getThirdComplementary","getFourthComplementary")){
-                Optional<?> extra=(Optional<?>)call(source,method);if(extra.isPresent())add(in,(Ingredient)extra.get(),1);
+                Optional<?> extra=(Optional<?>)call(source,method);if (extra.orElse(null) instanceof Ingredient ingredient && !ingredient.isEmpty()) add(in, ingredient, 1);
             }
             ItemStack output=(ItemStack)outputMethod.invoke(null,tag.copy());
             ResourceLocation id=id("anvil/"+source.getId().getNamespace()+"/"+source.getId().getPath()+"/"+entityId.getNamespace()+"/"+entityId.getPath());

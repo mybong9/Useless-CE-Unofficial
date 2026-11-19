@@ -44,16 +44,9 @@ public final class OmniversalPatternRecipeSelector {
             Level level, IPatternDetails pattern, MoldMatcher.PreparedMolds availableMolds) {
         if (level == null || pattern == null) return Optional.empty();
 
-        List<AlloyFurnaceRecipeCatalog.Entry> candidates =
-                AlloyFurnaceRecipeCatalog.findPatternCandidates(level, pattern);
-        // Prefer a complete processing pattern. Only when no complete recipe matches do we accept
-        // a pattern whose secondary outputs were removed by the player.
-        if (candidates.isEmpty()) {
-            candidates = AlloyFurnaceRecipeCatalog.findPatternCandidates(level, pattern, true);
-        }
-        if (candidates.isEmpty()) return Optional.empty();
-
-        return selectCandidate(candidates, availableMolds);
+        var complete = selectCandidate(AlloyFurnaceRecipeCatalog.findPatternCandidates(level, pattern), availableMolds);
+        return complete.or(() -> selectCandidate(
+                AlloyFurnaceRecipeCatalog.findPatternCandidates(level, pattern, true), availableMolds));
     }
 
     /**
