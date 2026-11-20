@@ -71,11 +71,14 @@ public final class MoldMatcher {
         public boolean matches(List<Ingredient> requirements) {
             List<Ingredient> normalized = normalizeRequirements(requirements);
             if (normalized.isEmpty()) return true;
-            if (occupiedSlots.isEmpty() || normalized.size() > occupiedSlots.size()) return false;
+            return assign(normalized, -1, -1);
+        }
 
-            Map<Integer, Integer> requirementBySlot = new HashMap<>();
+        private boolean assign(List<Ingredient> normalized, int anchor, int pinned) {
+            Map<Integer, List<Integer>> requirementsBySlot = new HashMap<>();
+            if (pinned >= 0) requirementsBySlot.put(anchor, new ArrayList<>(List.of(pinned)));
             for (int requirement = 0; requirement < normalized.size(); requirement++) {
-                if (!augment(normalized, requirement, requirementBySlot, new HashSet<>())) {
+                if (requirement != pinned && !augment(normalized, requirement, pinned, requirementsBySlot, new HashSet<>())) {
                     return false;
                 }
             }
@@ -83,14 +86,21 @@ public final class MoldMatcher {
         }
 
         private boolean augment(
-                List<Ingredient> requirements, int requirement,
-                Map<Integer, Integer> requirementBySlot, Set<Integer> visited) {
+                List<Ingredient> requirements, int requirement, int pinned,
+                Map<Integer, List<Integer>> requirementsBySlot, Set<Integer> visited) {
             for (int slot : matchingSlots(requirements.get(requirement))) {
                 if (!visited.add(slot)) continue;
-                int previous = requirementBySlot.getOrDefault(slot, -1);
-                if (previous < 0 || augment(requirements, previous, requirementBySlot, visited)) {
-                    requirementBySlot.put(slot, requirement);
+                var assigned = requirementsBySlot.computeIfAbsent(slot, ignored -> new ArrayList<>());
+                if (assigned.size() < available.get(slot).getCount()) {
+                    assigned.add(requirement);
                     return true;
+                }
+                for (int index = 0; index < assigned.size(); index++) {
+                    int previous = assigned.get(index);
+                    if (previous != pinned && augment(requirements, previous, pinned, requirementsBySlot, visited)) {
+                        assigned.set(index, requirement);
+                        return true;
+                    }
                 }
             }
             return false;
@@ -158,49 +168,10 @@ public final class MoldMatcher {
             List<Ingredient> requirements, Map<Integer, ItemStack> available, int availableSlot) {
         List<Ingredient> normalized = normalizeRequirements(requirements);
         if (normalized.isEmpty()) return false;
-        if (available == null || availableSlot < 0 || !available.containsKey(availableSlot)
-                || available.get(availableSlot) == null || available.get(availableSlot).isEmpty()
-                || normalized.size() > available.size()) {
-            return false;
-        }
-
+        var prepared = prepare(available);
         for (int anchoredRequirement = 0; anchoredRequirement < normalized.size(); anchoredRequirement++) {
-            if (!AdapterUtils.matchesMold(normalized.get(anchoredRequirement), available.get(availableSlot))) {
-                continue;
-            }
-
-            Map<Integer, Integer> requirementBySlot = new HashMap<>();
-            requirementBySlot.put(availableSlot, anchoredRequirement);
-            boolean complete = true;
-            for (int requirement = 0; requirement < normalized.size(); requirement++) {
-                if (requirement == anchoredRequirement) continue;
-                Set<Integer> visited = new HashSet<>();
-                visited.add(availableSlot);
-                if (!augment(normalized, available, requirement, requirementBySlot, visited)) {
-                    complete = false;
-                    break;
-                }
-            }
-            if (complete) return true;
-        }
-        return false;
-    }
-
-    private static boolean augment(
-            List<Ingredient> requirements, Map<Integer, ItemStack> available,
-            int requirement, Map<Integer, Integer> requirementBySlot, Set<Integer> visited) {
-        Ingredient needed = requirements.get(requirement);
-        for (Map.Entry<Integer, ItemStack> entry : available.entrySet()) {
-            Integer slot = entry.getKey();
-            ItemStack mold = entry.getValue();
-            if (slot == null || visited.contains(slot) || mold == null || mold.isEmpty()
-                    || !AdapterUtils.matchesMold(needed, mold)) continue;
-            visited.add(slot);
-            int previous = requirementBySlot.getOrDefault(slot, -1);
-            if (previous < 0 || augment(requirements, available, previous, requirementBySlot, visited)) {
-                requirementBySlot.put(slot, requirement);
-                return true;
-            }
+            if (prepared.matchingSlots(normalized.get(anchoredRequirement)).contains(availableSlot)
+                    && prepared.assign(normalized, availableSlot, anchoredRequirement)) return true;
         }
         return false;
     }
