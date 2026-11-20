@@ -109,10 +109,18 @@ public final class VoidMiningRecipeAdapter implements IRecipeAdapter<VoidMiningS
                 || !recipe.id().getPath().startsWith("alloy/d_")) return true;
         if (level == null) return false;
         if (!com.sorrowmist.useless.core.config.ConfigManager.isVoidMinersDimensionRestrictionEnabled()) return true;
+        return level.dimension().location().toString().equals(requiredDimension(recipe));
+    }
+
+    public static String dimensionMismatchDetail(AdvancedAlloyFurnaceRecipe recipe, Level level) {
+        return requiredDimension(recipe) + " / "
+                + (level == null ? "?" : level.dimension().location().toString());
+    }
+
+    private static String requiredDimension(AdvancedAlloyFurnaceRecipe recipe) {
         String path = recipe.id().getPath();
         try {
-            String dimension = new String(HexFormat.of().parseHex(path.substring(8, path.indexOf('/', 8))), StandardCharsets.UTF_8);
-            return level.dimension().location().toString().equals(dimension);
-        } catch (RuntimeException e) { return false; }
+            return new String(HexFormat.of().parseHex(path.substring(8, path.indexOf('/', 8))), StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException | IndexOutOfBoundsException e) { return "?"; }
     }
 }

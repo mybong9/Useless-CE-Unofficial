@@ -70,6 +70,11 @@ public final class OmniversalPatternDetails extends DynamicComponentPatternDetai
 
     @Override public IInput[] getInputs(){
         IInput[] inputs=super.getInputs();
+        if (recipe.id().getNamespace().equals("voidminers")
+                && recipe.id().getPath().startsWith("alloy/d_")) {
+            // The machine returns the frame physically. Keep it out of AE's remainder ledger.
+            return inputs;
+        }
         for(int i=0;i<inputs.length;i++){
             IInput input=inputs[i];var possible=input.getPossibleInputs();
             if(possible.length!=1 || !returnedInputs.contains(possible[0].what()))continue;

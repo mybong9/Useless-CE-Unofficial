@@ -685,7 +685,9 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
         if (!com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
                 .allowsDimension(recipe, getLevel())) {
             return CraftingTaskContext.TaskAvailability.unavailable(
-                    "gui.useless_mod.advanced_alloy_furnace.ae_task_status.waiting_conditions", "");
+                    "gui.useless_mod.advanced_alloy_furnace.ae_task_status.waiting_conditions",
+                    com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
+                            .dimensionMismatchDetail(recipe, getLevel()));
         }
         if (!formed) {
             return CraftingTaskContext.TaskAvailability.unavailable(

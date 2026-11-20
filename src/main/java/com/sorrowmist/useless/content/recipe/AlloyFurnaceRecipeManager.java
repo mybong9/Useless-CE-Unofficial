@@ -6,6 +6,8 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import com.sorrowmist.useless.init.ModRecipeTypes;
 import com.sorrowmist.useless.core.config.AlloyFurnaceTierRules;
+import com.sorrowmist.useless.core.config.ConfigManager;
+import com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -257,7 +259,9 @@ public class AlloyFurnaceRecipeManager {
         }
 
         RecipeCacheKey cacheKey = RecipeCacheKey.from(context);
-        LookupCacheKey lookupKey = new LookupCacheKey(level.getRecipeManager(), cacheKey);
+        ResourceLocation miningDimension = ConfigManager.isVoidMinersDimensionRestrictionEnabled()
+                ? level.dimension().location() : null;
+        LookupCacheKey lookupKey = new LookupCacheKey(level.getRecipeManager(), cacheKey, miningDimension);
 
         CachedLookup cached = recipeCache.get(lookupKey);
         if (cached != null) {
@@ -271,7 +275,7 @@ public class AlloyFurnaceRecipeManager {
         mergedCandidates.addAll(findAdaptedRecipes(level, context, cacheKey));
 
         AdvancedAlloyFurnaceRecipe recipe = selectBestRecipe(
-                mergedCandidates.toList(), context, new LookupSnapshot(cacheKey.keys()));
+                mergedCandidates.toList(), context, new LookupSnapshot(cacheKey.keys()), level);
         if (recipe != null) {
             cacheRecipe(lookupKey, recipe);
             return recipe;
@@ -336,13 +340,13 @@ public class AlloyFurnaceRecipeManager {
     @Nullable
     private AdvancedAlloyFurnaceRecipe selectBestRecipe(Iterable<AdvancedAlloyFurnaceRecipe> candidates,
                                                          RecipeLookupContext context) {
-        return selectBestRecipe(candidates, context, LookupSnapshot.from(context));
+        return selectBestRecipe(candidates, context, LookupSnapshot.from(context), null);
     }
 
     @Nullable
     private AdvancedAlloyFurnaceRecipe selectBestRecipe(
             Iterable<AdvancedAlloyFurnaceRecipe> candidates,
-            RecipeLookupContext context, LookupSnapshot snapshot) {
+            RecipeLookupContext context, LookupSnapshot snapshot, @Nullable Level level) {
         AdvancedAlloyFurnaceRecipe best = null;
         RecipeSpecificity bestSpecificity = null;
         List<AdvancedAlloyFurnaceRecipe> equallySpecific = new ArrayList<>();
@@ -350,6 +354,7 @@ public class AlloyFurnaceRecipeManager {
             // The ordinary furnace exposes one mold slot. Multiblock recipes are resolved from
             // their bound Omniversal Pattern and are checked against the mold hub separately.
             if (recipe.molds().size() > 1) continue;
+            if (level != null && !VoidMiningRecipeAdapter.allowsDimension(recipe, level)) continue;
             if (!matchesLookup(recipe, context, snapshot)) continue;
             if (best == null) {
                 best = recipe;
@@ -619,8 +624,10 @@ public class AlloyFurnaceRecipeManager {
             Map<Ingredient, Long> mergedInputs, Map<FluidStack, Long> mergedFluids,
             Map<AEKey, Long> mergedKeys, @Nullable ItemStack mold, List<ItemStack> actualInputs,
             RecipeCacheKey cacheKey) {
+        ResourceLocation miningDimension = adapter instanceof VoidMiningRecipeAdapter
+                && ConfigManager.isVoidMinersDimensionRestrictionEnabled() ? level.dimension().location() : null;
         AdapterLookupKey lookupKey = AdapterLookupKey.of(
-                level.getRecipeManager(), adapter, cacheKey, actualInputs);
+                level.getRecipeManager(), adapter, cacheKey, actualInputs, miningDimension);
         List<CoreRecipeHolder<?>> cached = adapterMatchCache.get(lookupKey);
         if (cached != null) {
             return (List<CoreRecipeHolder<T>>) (List<?>) cached;
@@ -1002,7 +1009,8 @@ public class AlloyFurnaceRecipeManager {
     }
 
     /** The public cache fingerprint remains order-independent; manager identity is internal. */
-    private record LookupCacheKey(RecipeManager recipeManager, RecipeCacheKey lookup) {
+    private record LookupCacheKey(RecipeManager recipeManager, RecipeCacheKey lookup,
+                                  @Nullable ResourceLocation miningDimension) {
     }
 
     /** Static conversions are scoped to the recipe manager that supplied the holder. */
@@ -1024,13 +1032,15 @@ public class AlloyFurnaceRecipeManager {
             Map<AEKey, Long> fluids,
             Map<AEKey, Long> keys,
             @Nullable AEKey mold,
-            List<OrderedItemSignature> orderedInputs
+            List<OrderedItemSignature> orderedInputs,
+            @Nullable ResourceLocation miningDimension
     ) {
         private static AdapterLookupKey of(
                 RecipeManager recipeManager,
                 com.sorrowmist.useless.api.recipe.IRecipeAdapter<?> adapter,
                 RecipeCacheKey lookup,
-                List<ItemStack> actualInputs) {
+                List<ItemStack> actualInputs,
+                @Nullable ResourceLocation miningDimension) {
             return new AdapterLookupKey(
                     recipeManager,
                     adapter,
@@ -1038,7 +1048,8 @@ public class AlloyFurnaceRecipeManager {
                     lookup.fluids(),
                     lookup.keys(),
                     lookup.mold(),
-                    orderedItemSignature(actualInputs));
+                    orderedItemSignature(actualInputs),
+                    miningDimension);
         }
     }
 
