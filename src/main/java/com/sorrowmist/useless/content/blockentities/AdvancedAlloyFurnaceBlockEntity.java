@@ -923,9 +923,10 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
         inventoryReference = ExternalInventoryStore.bindAt(
                 level, ExternalInventoryKind.FURNACE, requested, worldPosition,
                 itemHandler, legacyInventory, registries);
-        ExternalInventoryStore.setReference(this, inventoryReference);
         pendingLegacyInventory = null;
+        // Publishing the reference can synchronously trigger a neighbor inventory query.
         externalInventoryLoaded = true;
+        ExternalInventoryStore.setReference(this, inventoryReference);
         itemStorageRevision++;
         markRecipeInputsChanged();
         updateMoldState();

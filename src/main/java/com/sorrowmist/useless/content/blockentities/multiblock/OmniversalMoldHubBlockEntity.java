@@ -110,9 +110,10 @@ public final class OmniversalMoldHubBlockEntity extends BlockEntity implements M
         inventoryReference = ExternalInventoryStore.bindAt(
                 level, ExternalInventoryKind.MOLD_HUB, requested, worldPosition,
                 molds, legacyInventory, registries);
-        ExternalInventoryStore.setReference(this, inventoryReference);
         pendingLegacyInventory = null;
+        // Publishing the reference can synchronously trigger a neighbor inventory query.
         externalInventoryLoaded = true;
+        ExternalInventoryStore.setReference(this, inventoryReference);
         moldInventoryChanged();
     }
 

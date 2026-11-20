@@ -25,39 +25,43 @@ public final class NeoEcoDynamicOutputCompat {
             if (!(candidate.cpu() instanceof ECOCraftingCPU cpu)) {
                 continue;
             }
-            CoreCraftingOutput.Result preview = CoreCraftingOutput.claim(cpu, 
-                    new CoreCraftingOutput.Request(
-                            candidate.craftingId(),
-                            candidate.exactExpectedKey(),
-                            actualKey,
-                            amount,
-                            Actionable.SIMULATE));
-            if (!preview.accepted() || preview.claimedAmount() <= 0L) {
+            long offered = Math.min(amount, candidate.remainingAmount());
+            long preview = route(cpu, candidate, actualKey, offered, Actionable.SIMULATE);
+            if (preview <= 0L) {
                 continue;
             }
             if (match != null) {
                 return 0L;
             }
             match = candidate;
-            simulatedAmount = preview.claimedAmount();
+            simulatedAmount = preview;
         }
         if (match == null) {
             return 0L;
         }
 
         ECOCraftingCPU cpu = (ECOCraftingCPU) match.cpu();
-        CoreCraftingOutput.Result committed = CoreCraftingOutput.claim(cpu, 
-                new CoreCraftingOutput.Request(
-                        match.craftingId(),
-                        match.exactExpectedKey(),
-                        actualKey,
-                        simulatedAmount,
-                        Actionable.MODULATE));
-        if (!committed.accepted() || committed.claimedAmount() <= 0L) {
+        long committed = route(cpu, match, actualKey, simulatedAmount, Actionable.MODULATE);
+        if (committed <= 0L) {
             return 0L;
         }
-        DynamicPatternCpuStateManager.INSTANCE.claimEcoExact(
-                match.craftingId(), match.exactExpectedKey(), committed.claimedAmount());
-        return committed.claimedAmount();
+        manager.claimEcoExact(match.craftingId(), match.exactExpectedKey(), committed);
+        return committed;
+    }
+
+    private static long route(ECOCraftingCPU cpu, DynamicPatternCpuStateManager.EcoCandidate candidate,
+            AEKey actualKey, long amount, Actionable mode) {
+        if (actualKey.equals(candidate.exactExpectedKey())
+                && cpu instanceof cn.dancingsnow.neoecoae.crafting.execution.ECOCraftingCPU nativeCpu) {
+            var logic = nativeCpu.getLogic();
+            if (!candidate.craftingId().equals(logic.getProcessingJobId())) {
+                return 0L;
+            }
+            // ECO's normal input buffer reserves feedback for the next cycle before delivering the final output.
+            return logic.insert(actualKey, amount, mode);
+        }
+        CoreCraftingOutput.Result result = CoreCraftingOutput.claim(cpu, new CoreCraftingOutput.Request(
+                candidate.craftingId(), candidate.exactExpectedKey(), actualKey, amount, mode));
+        return result.accepted() ? result.claimedAmount() : 0L;
     }
 }

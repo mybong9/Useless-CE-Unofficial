@@ -169,9 +169,10 @@ public final class MePatternAssemblyBlockEntity extends AEBaseBlockEntity
         inventoryReference = ExternalInventoryStore.bindAt(
                 level, ExternalInventoryKind.PATTERN_ASSEMBLY, requested, worldPosition,
                 patterns, legacyInventory, registries);
-        ExternalInventoryStore.setReference(this, inventoryReference);
         pendingLegacyInventory = null;
+        // Publishing the reference can synchronously trigger a neighbor inventory query.
         externalInventoryLoaded = true;
+        ExternalInventoryStore.setReference(this, inventoryReference);
         inventoryChanged();
     }
 
