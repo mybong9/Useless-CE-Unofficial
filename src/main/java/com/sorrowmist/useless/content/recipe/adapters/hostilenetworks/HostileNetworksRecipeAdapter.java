@@ -125,7 +125,7 @@ public final class HostileNetworksRecipeAdapter
     /** One recipe per tier transition, starting and ending at canonical threshold data. */
     private static void addTrainingRecipes(
             List<CoreRecipeHolder<HostileNetworksSyntheticRecipe>> result, DataModel model) {
-        Ingredient matrix = CoreDataComponentIngredient.of(true, model.input());
+        Ingredient matrix = simulationInput(model.input());
         if (AdapterUtils.isIngredientEmpty(matrix)) return;
 
         List<ModelTier> tiers = List.of(ModelTier.values());
@@ -201,7 +201,7 @@ public final class HostileNetworksRecipeAdapter
         // 真实模拟室拒绝故障模型和不可模拟的自定义品级。
         if (tier == null || tier == ModelTier.FAULTY) return;
 
-        Ingredient matrix = CoreDataComponentIngredient.of(true, model.input());
+        Ingredient matrix = simulationInput(model.input());
         float accuracy = tier.accuracy();
         if (AdapterUtils.isIngredientEmpty(matrix)
                 || !Float.isFinite(accuracy) || accuracy <= 0F) {
@@ -240,9 +240,15 @@ public final class HostileNetworksRecipeAdapter
                 processTime,
                 Ingredient.EMPTY,
                 0,
-                List.of(mold),
+                List.of(Ingredient.of(Hostile.Items.SIM_CHAMBER.get()), mold),
                 AlloyFurnaceMode.NORMAL);
         result.add(holder(recipe));
+    }
+
+    private static Ingredient simulationInput(ItemStack stack) {
+        if (stack.isEmpty()) return Ingredient.EMPTY;
+        if (stack.is(Hostile.Items.PREDICTION_MATRIX.get())) return Ingredient.of(stack.getItem());
+        return CoreDataComponentIngredient.of(true, stack);
     }
 
     private static void addFabricatorRecipes(

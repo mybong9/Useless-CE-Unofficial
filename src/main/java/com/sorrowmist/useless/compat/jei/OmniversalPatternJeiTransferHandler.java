@@ -117,9 +117,8 @@ public final class OmniversalPatternJeiTransferHandler<T extends PatternEncoding
             boolean doTransfer,
             IRecipeTransferHandlerHelper helper) {
         if (!doTransfer) return null;
-        ModNetwork.CHANNEL.sendToServer(new com.sorrowmist.useless.network.EncodeOmniversalPatternPacket(
-                new SelectOmniversalPatternRecipePacket(menu.containerId, entry.identity().recipeId(),
-                        entry.identity().fingerprint(), entry.sourceId())));
+        ModNetwork.CHANNEL.sendToServer(new SelectOmniversalPatternRecipePacket(
+                menu.containerId, entry.identity().recipeId(), entry.identity().fingerprint(), entry.sourceId()));
         return null;
     }
 

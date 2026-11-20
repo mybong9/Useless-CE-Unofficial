@@ -529,7 +529,10 @@ public final class VillagerTradeRecipeAdapter
         if (cost == null || cost.isEmpty() || cost.getCount() <= 0) {
             return;
         }
-        Ingredient ingredient = CoreDataComponentIngredient.of(true, cost.copyWithCount(1));
+        // A vanilla offer without a tag accepts the same item regardless of the supplied tag.
+        Ingredient ingredient = cost.hasTag()
+                ? CoreDataComponentIngredient.of(true, cost.copyWithCount(1))
+                : Ingredient.of(cost.getItem());
         AdapterUtils.mergeIngredient(inputs, ingredient, cost.getCount());
     }
 

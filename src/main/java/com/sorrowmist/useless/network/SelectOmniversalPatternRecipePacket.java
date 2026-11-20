@@ -20,8 +20,8 @@ import org.jetbrains.annotations.NotNull;
  * pattern encoding terminal, so the pattern that terminal encodes next becomes an Omniversal Pattern
  * bound to that exact recipe — mold included.
  *
- * <p>Sent before the {@code SET_FILTER} packets that fill the terminal slots, so the pick is on
- * record no matter how quickly encoding follows.
+ * <p>The server either encodes immediately or remembers the selection on this player's menu,
+ * according to the JEI direct encoding setting.
  */
 public record SelectOmniversalPatternRecipePacket(
         int containerId, ResourceLocation recipeId, String fingerprint, String sourceId) implements CoreCustomPacketPayload {
@@ -70,23 +70,36 @@ public record SelectOmniversalPatternRecipePacket(
             var selected = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeCatalog.resolve(
                     player.level(), packet.sourceId(), identity);
             if (selected.isEmpty()) {
+                access.uselessMod$setDeferredOmniversalRecipe(null, null);
                 var candidates = com.sorrowmist.useless.content.recipe.AlloyFurnaceRecipeCatalog.entries(player.level(), packet.sourceId())
                         .stream().filter(entry -> entry.identity().recipeId().equals(packet.recipeId())).toList();
                 if (candidates.size() == 1) selected = java.util.Optional.of(candidates.get(0));
             }
-            if (selected.isPresent() && com.sorrowmist.useless.content.machines.advanced_alloy_furnace.ae.FullRecipeTerminalEncoding
-                    .required(menu, selected.get())) {
+            if (selected.isEmpty()) {
+                holder.uselessMod$setPendingOmniversalRecipe(null);
+                holder.uselessMod$setPendingOmniversalSourceId(null);
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "gui.useless_mod.omniversal_pattern.selection_missing"), true);
+                return;
+            }
+            if (com.sorrowmist.useless.core.config.ConfigManager.isJeiDirectPatternEncodingEnabled()) {
+                access.uselessMod$setDeferredOmniversalRecipe(null, null);
                 com.sorrowmist.useless.content.machines.advanced_alloy_furnace.ae.FullRecipeTerminalEncoding
                         .encode(menu, selected.get(), player);
                 return;
             }
-            holder.uselessMod$setPendingOmniversalRecipe(identity);
-            holder.uselessMod$setPendingOmniversalSourceId(packet.sourceId());
+            access.uselessMod$setDeferredOmniversalRecipe(null, null);
+            if (!com.sorrowmist.useless.content.machines.advanced_alloy_furnace.ae.FullRecipeTerminalEncoding
+                    .preview(menu, selected.get(), player)) {
+                player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                        "gui.useless_mod.omniversal_pattern.encoding_failed"), true);
+                return;
+            }
+            access.uselessMod$setDeferredOmniversalRecipe(selected.get().identity(), selected.get().sourceId());
             UselessMod.LOGGER.info("Omniversal recipe selected: recipe={}, source={}, container={}",
                     packet.recipeId(), packet.sourceId(), packet.containerId());
-            // The encoded pattern can arrive before this custom selection packet. Re-run the same
-            // conversion check now so the terminal does not remain with a plain pattern forever.
-            holder.uselessMod$tryConvertPendingOmniversalPattern();
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "gui.useless_mod.omniversal_pattern.press_encode"), true);
         });
     }
 

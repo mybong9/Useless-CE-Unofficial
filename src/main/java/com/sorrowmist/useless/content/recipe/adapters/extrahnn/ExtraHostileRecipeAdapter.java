@@ -220,7 +220,9 @@ public final class ExtraHostileRecipeAdapter implements IRecipeAdapter<ExtraHost
     }
     private static Ingredient matrix(List<DataModel> models) {
         Ingredient[] choices=models.stream().map(DataModel::input).filter(stack->!stack.isEmpty())
-                .map(stack->CoreDataComponentIngredient.of(false,stack)).toArray(Ingredient[]::new);
+                .map(stack -> stack.is(Hostile.Items.PREDICTION_MATRIX.get())
+                        ? Ingredient.of(stack.getItem()) : CoreDataComponentIngredient.of(false, stack))
+                .toArray(Ingredient[]::new);
         return choices.length==0?Ingredient.EMPTY:CompoundIngredient.of(choices);
     }
     private static String encode(List<ResourceLocation> ids) {return HexFormat.of().formatHex(String.join("|",ids.stream().map(Object::toString).toList()).getBytes(StandardCharsets.UTF_8));}

@@ -193,6 +193,8 @@ public class ConfigManager {
     private static final ForgeConfigSpec.IntValue OMNIVERSAL_PASSIVE_PATTERN_SLOTS;
     private static final ForgeConfigSpec.IntValue OMNIVERSAL_DECODE_CACHE_CAPACITY;
     private static final ForgeConfigSpec.BooleanValue OMNIVERSAL_PATTERN_AUTO_UPLOAD;
+    private static final ForgeConfigSpec.BooleanValue JEI_DIRECT_PATTERN_ENCODING;
+    private static final ForgeConfigSpec.BooleanValue ECO_CRAFTING_PATTERN_AUTO_UPLOAD;
     private static final ForgeConfigSpec.IntValue[] OMNIVERSAL_COIL_TIER_THREADS =
             new ForgeConfigSpec.IntValue[9];
     private static final ForgeConfigSpec.LongValue[] OMNIVERSAL_COIL_TIER_PARALLEL =
@@ -304,6 +306,14 @@ public class ConfigManager {
                         "and the player moves it manually, as before.")
                 .translation("useless_mod.configuration.omniversal_pattern_auto_upload")
                 .define("omniversal_pattern_auto_upload", true);
+        JEI_DIRECT_PATTERN_ENCODING = SERVER_BUILDER
+                .comment("Encode an omniversal pattern immediately when transferring a JEI recipe.")
+                .translation("useless_mod.configuration.jei_direct_pattern_encoding")
+                .define("jei_direct_pattern_encoding", false);
+        ECO_CRAFTING_PATTERN_AUTO_UPLOAD = SERVER_BUILDER
+                .comment("Upload newly encoded crafting patterns to an online ECO provider via ExtendedAE Plus.")
+                .translation("useless_mod.configuration.eco_crafting_pattern_auto_upload")
+                .define("eco_crafting_pattern_auto_upload", false);
         SERVER_BUILDER.pop();
 
         SERVER_BUILDER.translation("useless_mod.configuration.ore_generator")
@@ -1191,6 +1201,14 @@ public class ConfigManager {
      */
     public static boolean isOmniversalPatternAutoUploadEnabled() {
         return getConfigValue(OMNIVERSAL_PATTERN_AUTO_UPLOAD);
+    }
+
+    public static boolean isJeiDirectPatternEncodingEnabled() {
+        return getConfigValue(JEI_DIRECT_PATTERN_ENCODING);
+    }
+
+    public static boolean isEcoCraftingPatternAutoUploadEnabled() {
+        return getConfigValue(ECO_CRAFTING_PATTERN_AUTO_UPLOAD);
     }
 
     public static int getOreGeneratorSlots() {
