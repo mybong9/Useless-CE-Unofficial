@@ -185,6 +185,7 @@ public final class RecipeAdapterCompatRegistry {
             new CompatEntry("tconstruct", () -> register(
                     new com.sorrowmist.useless.content.recipe.adapters.tconstruct.TinkersRecipeAdapter())),
             new CompatEntry("embers", () -> com.sorrowmist.useless.content.recipe.adapters.embers.EmbersRecipeAdapter.register(RecipeAdapterCompatRegistry::register)),
+            new CompatEntry("integrateddynamics", () -> com.sorrowmist.useless.content.recipe.adapters.integrateddynamics.IntegratedDynamicsRecipeAdapter.register(RecipeAdapterCompatRegistry::register)),
             new CompatEntry("woot_revived", () -> register(new com.sorrowmist.useless.content.recipe.adapters.woot.WootRecipeAdapter())),
             new CompatEntry("gtceu", () -> register(
                     new com.sorrowmist.useless.content.recipe.adapters.gtceu.GregTechRecipeAdapter())),

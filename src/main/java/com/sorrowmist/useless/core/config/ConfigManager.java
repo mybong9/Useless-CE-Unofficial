@@ -183,6 +183,7 @@ public class ConfigManager {
     private static final ForgeConfigSpec.BooleanValue ENABLE_ASTRAL_SORCERY_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_BOTANY_POTS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_EX_DEORUM_RECIPE_CONVERSION;
+    private static final ForgeConfigSpec.BooleanValue ENABLE_INTEGRATED_DYNAMICS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_STACK_LIMIT;
     private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_SLOTS;
     private static final ForgeConfigSpec.BooleanValue ENABLE_JUSTDIRETHINGS_RECIPE_CONVERSION;
@@ -803,6 +804,8 @@ public class ConfigManager {
                 "enable_thermal_recipe_conversion", true);
         ENABLE_EXTRA_HNN_RECIPE_CONVERSION = defineRecipeConversionOption("enable_extra_hnn_recipe_conversion", true);
         ENABLE_EMBERS_RECIPE_CONVERSION = defineRecipeConversionOption("enable_embers_recipe_conversion", true);
+        ENABLE_INTEGRATED_DYNAMICS_RECIPE_CONVERSION =
+                defineRecipeConversionOption("enable_integrated_dynamics_recipe_conversion", true);
         ENABLE_WOOT_RECIPE_CONVERSION = defineRecipeConversionOption("enable_woot_recipe_conversion", true);
         ENABLE_GTCEU_RECIPE_CONVERSION = defineRecipeConversionOption("enable_gtceu_recipe_conversion", true);
         ENABLE_TCONSTRUCT_RECIPE_CONVERSION=defineRecipeConversionOption("enable_tconstruct_recipe_conversion",true);
@@ -883,6 +886,7 @@ public class ConfigManager {
                 Map.entry("thermal", ENABLE_THERMAL_RECIPE_CONVERSION),
                 Map.entry("extrahnn", ENABLE_EXTRA_HNN_RECIPE_CONVERSION),
                 Map.entry("embers", ENABLE_EMBERS_RECIPE_CONVERSION),
+                Map.entry("integrateddynamics", ENABLE_INTEGRATED_DYNAMICS_RECIPE_CONVERSION),
                 Map.entry("woot_revived", ENABLE_WOOT_RECIPE_CONVERSION),
                 Map.entry("gtceu", ENABLE_GTCEU_RECIPE_CONVERSION),
                 Map.entry("tconstruct", ENABLE_TCONSTRUCT_RECIPE_CONVERSION),
