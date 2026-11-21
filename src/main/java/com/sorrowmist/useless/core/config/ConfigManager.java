@@ -183,6 +183,8 @@ public class ConfigManager {
     private static final ForgeConfigSpec.BooleanValue ENABLE_ASTRAL_SORCERY_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_BOTANY_POTS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_EX_DEORUM_RECIPE_CONVERSION;
+    private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_MULTIPLIER;
+    private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_SLOTS;
     private static final ForgeConfigSpec.BooleanValue ENABLE_JUSTDIRETHINGS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_JDTE_RECIPE_CONVERSION;
     private static final Map<String, ForgeConfigSpec.BooleanValue> RECIPE_CONVERSION_OPTIONS;
@@ -468,12 +470,12 @@ public class ConfigManager {
         FORTUNE_LEVEL = SERVER_BUILDER
                 .comment("牛排工具时运附魔等级")
                 .translation("useless_mod.configuration.fortune_level")
-                .defineInRange("fortune_level", 10, 1, 127);
+                .defineInRange("fortune_level", 64, 1, 1024);
 
         LOOTING_LEVEL = SERVER_BUILDER
                 .comment("牛排工具抢夺附魔等级")
                 .translation("useless_mod.configuration.looting_level")
-                .defineInRange("looting_level", 10, 1, 127);
+                .defineInRange("looting_level", 64, 1, 1024);
 
         // 战利品大爆发触发概率配置
         FESTIVE_DROP_CHANCE = SERVER_BUILDER
@@ -927,6 +929,14 @@ public class ConfigManager {
 
         COMMON_SPEC = COMMON_BUILDER.build();
         CLIENT_SPEC = CLIENT_BUILDER.build();
+        SERVER_BUILDER.push("exdeorum");
+        MECHANICAL_SIEVE_OUTPUT_MULTIPLIER = SERVER_BUILDER
+                .comment("Multiply actual Mechanical Sieve drops after rolling recipe odds.")
+                .defineInRange("exdeorum_mechanical_sieve_output_multiplier", 1024, 1, 4096);
+        MECHANICAL_SIEVE_OUTPUT_SLOTS = SERVER_BUILDER
+                .comment("Mechanical Sieve output inventory size. Restart after changing.")
+                .defineInRange("exdeorum_mechanical_sieve_output_slots", 20, 20, 1024);
+        SERVER_BUILDER.pop();
         SERVER_SPEC = SERVER_BUILDER.build();
     }
 
@@ -1172,6 +1182,14 @@ public class ConfigManager {
 
     public static boolean isVoidMinersDimensionRestrictionEnabled() {
         return getConfigValue(VOID_MINERS_DIMENSION_RESTRICTION);
+    }
+
+    public static int mechanicalSieveOutputMultiplier() {
+        return getConfigValue(MECHANICAL_SIEVE_OUTPUT_MULTIPLIER);
+    }
+
+    public static int mechanicalSieveOutputSlots() {
+        return getConfigValue(MECHANICAL_SIEVE_OUTPUT_SLOTS);
     }
 
     public static int getCompactF9PatternSlots() {

@@ -1,39 +1,11 @@
 package com.sorrowmist.useless.utils;
 
-import com.electronwill.nightconfig.core.Config;
-import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import com.sorrowmist.useless.core.config.ConfigManager;
 import mekanism.api.Upgrade;
 import mekanism.common.config.MekanismConfig;
 import mekanism.common.tile.interfaces.IUpgradeTile;
-import net.minecraftforge.fml.loading.FMLPaths;
-
-import java.io.File;
 
 public class MekUtils {
-
-    public static int MAX_UPGRADE = 16;
-
-    static {
-        File file = FMLPaths.CONFIGDIR.get().resolve("useless_mod-server.toml").toFile();
-
-        CommentedFileConfig config = CommentedFileConfig.builder(file).autosave().sync().build();
-        config.load();
-
-        Config mekanism = config.get("mekanism_upgrade");
-        if (mekanism != null) {
-            int max = mekanism.getInt("max_upgrade");
-            if (max < 1 || max > 64) {
-                max = 16;
-            }
-            MAX_UPGRADE = max;
-        } else {
-            config.set("mekanism_upgrade.max_upgrade", MAX_UPGRADE);
-            config.save();
-        }
-
-        config.close();
-    }
 
     public static double time(IUpgradeTile tile) {
         double multiplier = Math.pow((double)(MekanismConfig.general.maxUpgradeMultiplier.get() * ConfigManager.getTimeMultiplier()), (double)tile.getComponent().getUpgrades(Upgrade.SPEED) / (double)-8.0F);

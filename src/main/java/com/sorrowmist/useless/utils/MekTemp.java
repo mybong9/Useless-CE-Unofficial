@@ -3,7 +3,6 @@ package com.sorrowmist.useless.utils;
 import java.util.function.BiConsumer;
 
 public class MekTemp {
-    public static String name;
     public static final int MAX_EXTRA_OPERATIONS_PER_TICK = 128;
     public static final ThreadLocal<Boolean> isInjecting = ThreadLocal.withInitial(() -> false);
     public static final BiConsumer<Integer, Runnable>

@@ -12,6 +12,7 @@ public final class UselessMixinPlugin implements IMixinConfigPlugin {
     @Override public boolean shouldApplyMixin(String target, String mixin) {
         if (mixin.contains(".gtceu.")) return loaded("gtceu");
         if (mixin.contains(".tconstruct.")) return loaded("tconstruct");
+        if (mixin.contains(".exdeorum.")) return loaded("exdeorum");
         if (mixin.contains(".ftbultimine.")) return loaded("ftbultimine");
         if (mixin.contains(".emi.")) return loaded("emi");
         if (mixin.endsWith(".EaepBookmarkPatternMixin") || mixin.endsWith(".EaepBookmarkClientMixin")) return loaded("extendedae_plus");

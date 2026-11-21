@@ -71,6 +71,7 @@ import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -388,6 +389,19 @@ public class EndlessBeafItem extends TieredItem {
             tag.remove("MaxDamage");
         }
         CoreItemStackData.setUnbreakable(stack, true);
+    }
+
+    @Override
+    public int getEnchantmentLevel(ItemStack stack, Enchantment enchantment) {
+        if (enchantment == Enchantments.BLOCK_FORTUNE) {
+            EnchantMode mode = CoreItemComponents.getOrDefault(stack,
+                    UselessComponents.EnchantModeComponent.get(), EnchantMode.FORTUNE);
+            return mode == EnchantMode.FORTUNE ? ConfigManager.getFortuneLevel() : 0;
+        }
+        if (enchantment == Enchantments.MOB_LOOTING) {
+            return ConfigManager.getLootingLevel();
+        }
+        return super.getEnchantmentLevel(stack, enchantment);
     }
 
     /** Keeps the tool's fixed enchantments aligned with its selected mode and server config. */
