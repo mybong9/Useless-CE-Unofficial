@@ -29,12 +29,20 @@ public final class PagedSieveOutputSlot extends SlotItemHandler {
     @Override public boolean mayPlace(ItemStack stack) { return false; }
     @Override public boolean mayPickup(Player player) { return isActive() && !getItem().isEmpty(); }
     @Override public ItemStack getItem() {
-        return isActive() ? inventory.getStackInSlot(backingSlot()) : ItemStack.EMPTY;
+        if (!isActive()) return ItemStack.EMPTY;
+        ItemStack stack = inventory.getStackInSlot(backingSlot());
+        return stack.getCount() > stack.getMaxStackSize() ? stack.copyWithCount(stack.getMaxStackSize()) : stack;
     }
+    public int storedCount() { return isActive() ? inventory.getStackInSlot(backingSlot()).getCount() : 0; }
     @Override public int getMaxStackSize() { return isActive() ? inventory.getSlotLimit(backingSlot()) : 0; }
     @Override public int getMaxStackSize(ItemStack stack) { return Math.min(getMaxStackSize(), stack.getMaxStackSize()); }
     @Override public void set(ItemStack stack) {
         if (isActive()) {
+            ItemStack stored = inventory.getStackInSlot(backingSlot());
+            if (stack.isEmpty() && stored.getCount() > stored.getMaxStackSize()) {
+                remove(stored.getMaxStackSize());
+                return;
+            }
             inventory.setStackInSlot(backingSlot(), stack);
             setChanged();
         }

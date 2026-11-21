@@ -18,20 +18,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "thedarkcolour.exdeorum.blockentity.MechanicalSieveBlockEntity", remap = false)
 public abstract class MechanicalSieveOutputMixin {
     @Inject(method = "handleResultItem", at = @At("HEAD"), cancellable = true, require = 1)
-    private void useless$insertMultipliedOutput(ItemStack result, ServerLevel level, RandomSource random,
+    private void useless$insertBulkOutput(ItemStack result, ServerLevel level, RandomSource random,
             CallbackInfoReturnable<Boolean> callback) {
         BlockEntity machine = (BlockEntity) (Object) this;
         if (!(machine.getCapability(ForgeCapabilities.ITEM_HANDLER).orElse(null)
                 instanceof IItemHandlerModifiable inventory) || result.isEmpty()) return;
 
-        long total = (long) result.getCount() * ConfigManager.mechanicalSieveOutputMultiplier();
-        long remaining = total;
+        int total = result.getCount();
+        int remaining = total;
         int end = Math.min(inventory.getSlots(), ConfigManager.mechanicalSieveOutputSlots() + 2);
         for (int slot = 2; slot < end && remaining > 0; slot++) {
             ItemStack existing = inventory.getStackInSlot(slot);
             if (!existing.isEmpty() && !ItemHandlerHelper.canItemStacksStack(result, existing)) continue;
-            int limit = Math.min(result.getMaxStackSize(), inventory.getSlotLimit(slot));
-            int amount = (int) Math.min(remaining, Math.max(0, limit - existing.getCount()));
+            int limit = ConfigManager.mechanicalSieveOutputStackLimit();
+            int amount = Math.min(remaining, Math.max(0, limit - existing.getCount()));
             if (amount == 0) continue;
             inventory.setStackInSlot(slot, result.copyWithCount(existing.getCount() + amount));
             remaining -= amount;

@@ -7,4 +7,5 @@ public interface MechanicalSievePages {
 
     int useless$page();
     int useless$pageCount();
+    int useless$storedCount(int visibleSlot);
 }

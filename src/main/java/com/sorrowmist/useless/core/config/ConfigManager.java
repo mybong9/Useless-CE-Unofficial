@@ -183,7 +183,7 @@ public class ConfigManager {
     private static final ForgeConfigSpec.BooleanValue ENABLE_ASTRAL_SORCERY_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_BOTANY_POTS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_EX_DEORUM_RECIPE_CONVERSION;
-    private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_MULTIPLIER;
+    private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_STACK_LIMIT;
     private static final ForgeConfigSpec.IntValue MECHANICAL_SIEVE_OUTPUT_SLOTS;
     private static final ForgeConfigSpec.BooleanValue ENABLE_JUSTDIRETHINGS_RECIPE_CONVERSION;
     private static final ForgeConfigSpec.BooleanValue ENABLE_JDTE_RECIPE_CONVERSION;
@@ -930,9 +930,9 @@ public class ConfigManager {
         COMMON_SPEC = COMMON_BUILDER.build();
         CLIENT_SPEC = CLIENT_BUILDER.build();
         SERVER_BUILDER.push("exdeorum");
-        MECHANICAL_SIEVE_OUTPUT_MULTIPLIER = SERVER_BUILDER
-                .comment("Multiply actual Mechanical Sieve drops after rolling recipe odds.")
-                .defineInRange("exdeorum_mechanical_sieve_output_multiplier", 1024, 1, 4096);
+        MECHANICAL_SIEVE_OUTPUT_STACK_LIMIT = SERVER_BUILDER
+                .comment("Maximum number of items stored in one Mechanical Sieve output slot.")
+                .defineInRange("exdeorum_mechanical_sieve_output_stack_limit", 1024, 1, 4096);
         MECHANICAL_SIEVE_OUTPUT_SLOTS = SERVER_BUILDER
                 .comment("Mechanical Sieve output inventory size. Restart after changing.")
                 .defineInRange("exdeorum_mechanical_sieve_output_slots", 20, 20, 1024);
@@ -1184,8 +1184,8 @@ public class ConfigManager {
         return getConfigValue(VOID_MINERS_DIMENSION_RESTRICTION);
     }
 
-    public static int mechanicalSieveOutputMultiplier() {
-        return getConfigValue(MECHANICAL_SIEVE_OUTPUT_MULTIPLIER);
+    public static int mechanicalSieveOutputStackLimit() {
+        return getConfigValue(MECHANICAL_SIEVE_OUTPUT_STACK_LIMIT);
     }
 
     public static int mechanicalSieveOutputSlots() {

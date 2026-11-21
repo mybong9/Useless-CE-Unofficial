@@ -35,6 +35,23 @@ public final class MechanicalSieveScreenPages {
         event.getGuiGraphics().drawCenteredString(Minecraft.getInstance().font,
                 (pages.useless$page() + 1) + " / " + pages.useless$pageCount(),
                 screen.getGuiLeft() + 123, Math.max(0, screen.getGuiTop() - 18) + 4, 0xFFFFFF);
+        var graphics = event.getGuiGraphics();
+        var font = Minecraft.getInstance().font;
+        for (int index = 0; index < MechanicalSievePages.PAGE_SIZE; index++) {
+            var slot = screen.getMenu().getSlot(index + 2);
+            int count = pages.useless$storedCount(index);
+            if (count <= slot.getItem().getMaxStackSize() || slot.getItem().isEmpty()) continue;
+            String label = Integer.toString(count);
+            int width = (int) Math.ceil(font.width(label) * 0.7);
+            int right = screen.getGuiLeft() + slot.x + 17;
+            int bottom = screen.getGuiTop() + slot.y + 17;
+            graphics.pose().pushPose();
+            graphics.pose().translate(right - width, bottom - 7, 250);
+            graphics.fill(0, 0, width, 7, 0xFF252525);
+            graphics.pose().scale(0.7F, 0.7F, 1);
+            graphics.drawString(font, label, 0, 0, 0xFFFFFF, false);
+            graphics.pose().popPose();
+        }
     }
 
     private static void requestPage(AbstractContainerScreen<?> screen, MechanicalSievePages pages, int button, int delta) {
