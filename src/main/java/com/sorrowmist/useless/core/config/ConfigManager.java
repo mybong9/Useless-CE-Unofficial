@@ -935,7 +935,7 @@ public class ConfigManager {
                 .defineInRange("exdeorum_mechanical_sieve_output_stack_limit", 1024, 1, 4096);
         MECHANICAL_SIEVE_OUTPUT_SLOTS = SERVER_BUILDER
                 .comment("Mechanical Sieve output inventory size. Restart after changing.")
-                .defineInRange("exdeorum_mechanical_sieve_output_slots", 20, 20, 1024);
+                .defineInRange("exdeorum_mechanical_sieve_output_slots", 4096, 20, 4096);
         SERVER_BUILDER.pop();
         SERVER_SPEC = SERVER_BUILDER.build();
     }
