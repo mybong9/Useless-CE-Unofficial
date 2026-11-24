@@ -1,4 +1,8 @@
 {
+  "gui.useless_mod.furnace.rename": "重新命名機器",
+  "tooltip.useless_mod.useless_compact_c9.controls": "右鍵查看 CPU、執行緒和合成狀態。潛行右鍵開啟 ECO 計算通訊介面。",
+  "tooltip.useless_mod.useless_compact_f9.controls": "右鍵查看虛擬合成狀態。空手潛行右鍵可管理已載入的樣板。",
+  "tooltip.useless_mod.useless_compact_l9.controls": "右鍵查看無限儲存狀態。潛行右鍵可設定搬入、搬出與篩選。",
   "gui.useless_mod.wireless_logistics.flow.both": "輸入輸出",
   "gui.useless_mod.wireless_logistics.edit_direction": "編輯：%s",
   "gui.useless_mod.staff_ui.area_damage_settings": "範圍傷害設定",

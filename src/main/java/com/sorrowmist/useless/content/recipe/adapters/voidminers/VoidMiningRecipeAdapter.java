@@ -112,6 +112,33 @@ public final class VoidMiningRecipeAdapter implements IRecipeAdapter<VoidMiningS
         return level.dimension().location().toString().equals(requiredDimension(recipe));
     }
 
+    public static AdvancedAlloyFurnaceRecipe recipeForDimension(AdvancedAlloyFurnaceRecipe recipe, Level level) {
+        if (level == null || allowsDimension(recipe, level)) return recipe;
+        String machine = machineSegment(recipe.id().getPath());
+        var alternatives = AlloyFurnaceRecipeCatalog.entries(level, "voidminers").stream()
+                .map(AlloyFurnaceRecipeCatalog.Entry::recipe)
+                .filter(candidate -> machine.equals(machineSegment(candidate.id().getPath())))
+                .filter(candidate -> allowsDimension(candidate, level))
+                .filter(candidate -> sameOutputs(recipe.outputs(), candidate.outputs()))
+                .limit(2).toList();
+        return alternatives.size() == 1 ? alternatives.get(0) : recipe;
+    }
+
+    private static String machineSegment(String path) {
+        if (!path.startsWith("alloy/d_")) return "";
+        int start = path.indexOf('/', 8) + 1;
+        int end = path.indexOf('/', start);
+        return start > 0 && end > start ? path.substring(start, end) : "";
+    }
+
+    private static boolean sameOutputs(List<ItemStack> left, List<ItemStack> right) {
+        if (left.size() != right.size()) return false;
+        for (int index = 0; index < left.size(); index++) {
+            if (!ItemStack.matches(left.get(index), right.get(index))) return false;
+        }
+        return true;
+    }
+
     public static String dimensionMismatchDetail(AdvancedAlloyFurnaceRecipe recipe, Level level) {
         return requiredDimension(recipe) + " / "
                 + (level == null ? "?" : level.dimension().location().toString());

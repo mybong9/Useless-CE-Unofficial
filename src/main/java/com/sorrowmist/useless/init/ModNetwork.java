@@ -121,5 +121,8 @@ public class ModNetwork {
         CHANNEL.registerToServer(com.sorrowmist.useless.network.EncodeOmniversalPatternPacket.class,
                 com.sorrowmist.useless.network.EncodeOmniversalPatternPacket.STREAM_CODEC,
                 com.sorrowmist.useless.network.EncodeOmniversalPatternPacket::handle);
+        CHANNEL.registerToServer(com.sorrowmist.useless.network.RenameAlloyFurnacePacket.class,
+                com.sorrowmist.useless.network.RenameAlloyFurnacePacket.CODEC,
+                com.sorrowmist.useless.network.RenameAlloyFurnacePacket::handle);
     }
 }

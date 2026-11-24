@@ -262,6 +262,40 @@ public class AdvancedAlloyFurnaceScreen extends AbstractContainerScreen<Advanced
     private boolean cancelAePressed = false;
 
     // Cache both successful and failed pattern display lookups for this screen instance.
+    private net.minecraft.client.gui.components.EditBox machineName;
+    private Component displayedMachineName;
+
+    @Override
+    protected void init() {
+        super.init();
+        var label = Component.translatable("gui.useless_mod.furnace.rename");
+        machineName = addRenderableWidget(new net.minecraft.client.gui.components.EditBox(
+                font, leftPos + imageWidth - 150, Math.max(0, topPos - 20), 128, 18, label));
+        machineName.setMaxLength(com.sorrowmist.useless.network.RenameAlloyFurnacePacket.MAX_NAME);
+        machineName.setVisible(false);
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.literal("✎"), button -> {
+            if (!machineName.isVisible()) {
+                var furnace = menu.getBlockEntity();
+                var name = displayedMachineName != null ? displayedMachineName
+                        : furnace == null ? null : furnace.getCustomName();
+                machineName.setValue(name == null ? "" : name.getString());
+                machineName.setVisible(true);
+                setFocused(machineName);
+                button.setMessage(Component.literal("✓"));
+            } else {
+                String name = machineName.getValue().strip();
+                if (!name.isEmpty()) {
+                    com.sorrowmist.useless.init.ModNetwork.CHANNEL.sendToServer(
+                            new com.sorrowmist.useless.network.RenameAlloyFurnacePacket(menu.containerId, name));
+                    displayedMachineName = Component.literal(name);
+                }
+                machineName.setVisible(false);
+                setFocused(null);
+                button.setMessage(Component.literal("✎"));
+            }
+        }).bounds(leftPos + imageWidth - 20, Math.max(0, topPos - 20), 18, 18)
+                .tooltip(net.minecraft.client.gui.components.Tooltip.create(label)).build());
+    }
 
     public AdvancedAlloyFurnaceScreen(AdvancedAlloyFurnaceMenu menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -361,7 +395,9 @@ public class AdvancedAlloyFurnaceScreen extends AbstractContainerScreen<Advanced
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        // 不渲染任何标签
+        var furnace = menu.getBlockEntity();
+        var name = displayedMachineName != null ? displayedMachineName : furnace == null ? null : furnace.getCustomName();
+        if (name != null) guiGraphics.drawString(font, font.plainSubstrByWidth(name.getString(), 120), 8, 6, 0x404040, false);
     }
 
     /**
@@ -390,8 +426,9 @@ public class AdvancedAlloyFurnaceScreen extends AbstractContainerScreen<Advanced
         }
 
         GenericStack patternOutput = isPatternSlot ? getPatternOutput(stack) : null;
-        if (PatternSlotRenderer.renderPattern(
-                guiGraphics, this.font, patternOutput, x, y, slot.x + slot.y * this.imageWidth)) {
+        if (patternOutput != null) {
+            guiGraphics.renderItem(patternOutput.what().wrapForDisplayOrFilter(), x, y,
+                    slot.x + slot.y * this.imageWidth);
             return;
         }
 

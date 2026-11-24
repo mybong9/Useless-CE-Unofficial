@@ -1,4 +1,8 @@
 {
+  "gui.useless_mod.furnace.rename": "Rename machine",
+  "tooltip.useless_mod.useless_compact_c9.controls": "Right-click to view CPU, threads and crafting status. Sneak-right-click to open the ECO computation interface.",
+  "tooltip.useless_mod.useless_compact_f9.controls": "Right-click to view virtual crafting status. Sneak-right-click with an empty hand to manage installed patterns.",
+  "tooltip.useless_mod.useless_compact_l9.controls": "Right-click to view infinite storage status. Sneak-right-click to configure transfers and filters.",
   "gui.useless_mod.wireless_logistics.ae_bound_hint": "Use the staff-linked ME network directly: input extracts, output inserts",
   "gui.useless_mod.wireless_logistics.ae_unbound_hint": "Link the staff to an ME wireless access point, then open logistics; no extra source container is needed",
   "gui.useless_mod.wireless_logistics.flow.both": "Input / Output",

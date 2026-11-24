@@ -93,7 +93,8 @@ public final class OmniversalBigIntegerTarget implements AlloyFurnaceBigIntegerT
                     this.core, omniversal, prototype, threads(), segmentBudget, requested);
             if (accepted.signum() <= 0) {
                 // 报 0 时给出原因（档次不够 / 缺模具 / 没能量），供调用方提示玩家。
-                AdvancedAlloyFurnaceRecipe recipe = omniversal.recipe();
+                AdvancedAlloyFurnaceRecipe recipe = com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
+                        .recipeForDimension(omniversal.recipe(), this.core.getLevel());
                 return AlloyFurnaceBigIntegerCapacity.none(recipe == null
                         ? "" : this.core.getTaskAvailability(recipe).statusKey());
             }

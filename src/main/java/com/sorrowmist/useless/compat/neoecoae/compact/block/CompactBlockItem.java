@@ -27,5 +27,6 @@ public class CompactBlockItem extends BlockItem {
         super.appendHoverText(stack, context, tooltip, flag);
         String key = getDescriptionId().replaceFirst("^block\\.", "tooltip.");
         tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable(key + ".controls").withStyle(ChatFormatting.DARK_GRAY));
     }
 }

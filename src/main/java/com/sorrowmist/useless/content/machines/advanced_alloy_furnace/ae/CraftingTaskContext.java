@@ -148,7 +148,8 @@ public interface CraftingTaskContext {
         if (pattern != null) {
             IPatternDetails original = SmartDoublingPatterns.unwrap(pattern);
             if (original instanceof OmniversalPatternDetails omniversal) {
-                return omniversal.recipe();
+                return com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
+                        .recipeForDimension(omniversal.recipe(), getLevel());
             }
         }
 

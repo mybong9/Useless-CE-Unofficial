@@ -670,7 +670,10 @@ public final class MultiblockAlloyFurnaceCoreBlockEntity extends BlockEntity imp
             IPatternDetails pattern, List<ItemStack> items, List<FluidStack> fluids,
             List<GenericStack> keys, long operations) {
         IPatternDetails original = SmartDoublingPatterns.unwrap(pattern);
-        return original instanceof OmniversalPatternDetails omniversal ? omniversal.recipe() : null;
+        return original instanceof OmniversalPatternDetails omniversal
+                ? com.sorrowmist.useless.content.recipe.adapters.voidminers.VoidMiningRecipeAdapter
+                        .recipeForDimension(omniversal.recipe(), getLevel())
+                : null;
     }
 
     @Override

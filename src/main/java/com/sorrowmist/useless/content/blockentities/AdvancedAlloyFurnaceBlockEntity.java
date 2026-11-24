@@ -1488,6 +1488,13 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
     public void saveAdditional(@NotNull CompoundTag tag) {
         net.minecraft.core.HolderLookup.Provider registries = com.sorrowmist.uselesscore.api.registry.CoreRegistries.lookup(this);
         super.saveAdditional(tag);
+        if (externalInventoryLoaded) {
+            if (inventorySavePending) saveExternalInventory();
+            // Keep a chunk-local recovery copy if the external inventory file is missing.
+            tag.put(NBTConstants.INVENTORY, itemHandler.serializeNBT());
+        } else if (pendingLegacyInventory != null) {
+            tag.put(NBTConstants.INVENTORY, pendingLegacyInventory.copy());
+        }
 
         tag.putInt(NBTConstants.FURNACE_TIER, this.furnaceTier);
         tag.putLong(NBTConstants.ENERGY, this.energyManager.getEnergyStoredLong());
@@ -1559,6 +1566,7 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
         CompoundTag tag = this.saveWithoutMetadata();
         // AE 合成任务数据体积大且客户端无需，网络更新包中剥离
         tag.remove("AeTasks");
+        tag.remove(NBTConstants.INVENTORY);
         return tag;
     }
 
@@ -2113,6 +2121,7 @@ public class AdvancedAlloyFurnaceBlockEntity extends AEBaseBlockEntity implement
 
     @Override
     public InternalInventory getTerminalPatternInventory() {
+        ensureExternalInventory();
         return patternInventory;
     }
 

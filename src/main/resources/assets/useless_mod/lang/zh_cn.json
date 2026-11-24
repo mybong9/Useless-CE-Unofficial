@@ -1,4 +1,8 @@
 {
+  "gui.useless_mod.furnace.rename": "重命名机器",
+  "tooltip.useless_mod.useless_compact_c9.controls": "右键查看 CPU、线程和合成状态。潜行右键打开 ECO 计算通讯接口。",
+  "tooltip.useless_mod.useless_compact_f9.controls": "右键查看虚拟合成状态。空手潜行右键打开样板管理，可浏览、放入或取出已装载样板。",
+  "tooltip.useless_mod.useless_compact_l9.controls": "右键查看无限存储状态。潜行右键打开通讯接口，可设置搬入、搬出和过滤。",
   "gui.useless_mod.wireless_logistics.ae_bound_hint": "直接连接手杖已绑定的 AE 网络；输入从网络取出，输出存入网络",
   "gui.useless_mod.wireless_logistics.ae_unbound_hint": "先用手杖绑定 AE 无线访问点，再打开物流设置；容器无需额外源端",
   "gui.useless_mod.wireless_logistics.flow.both": "输入输出",
